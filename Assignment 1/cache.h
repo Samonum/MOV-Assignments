@@ -63,5 +63,5 @@ public:
 	// data
 	CacheLine* slot;
 	Memory* memory;
-	int hits, misses, totalCost, cacheAdd, evict, read, write;
+	int rHits, rMisses, totalCost, rCacheAdd, rEvict, read, write, wHits, wMisses, wCacheAdd, wEvict;
 };

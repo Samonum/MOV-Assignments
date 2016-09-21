@@ -71,8 +71,8 @@ void Game::Tick( float dt )
 	}
 	// report on memory access cost (134M before your improvements :) )
 	printf( "total memory access cost: %iM cycles\n", cache->totalCost / 1000000 );
-	printf("Read %i, Write %i\n", cache->read, cache->write);
-	printf("hits %i, evictions/cacheAdds %i / %i, misses %i\n", cache->hits, cache->evict, cache->cacheAdd, cache->misses);
+	printf("Read %i, hits:misses %i:%i, evictions / cacheAdds %i / %i\n", cache->read, cache->rHits, cache->rMisses, cache->rEvict, cache->rCacheAdd);
+	printf("Write %i, hits:misses %i:%i, evictions / cacheAdds %i / %i\n", cache->write, cache->wHits, cache->wMisses, cache->wEvict, cache->wCacheAdd);
 	cache->ResetStats();
 	// visualize current state
 	// artificial RAM access delay and cost counting are disabled here

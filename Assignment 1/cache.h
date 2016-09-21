@@ -10,13 +10,29 @@
 #define L1ACCESSCOST	4
 #define L2ACCESSCOST	16
 #define L3ACCESSCOST	48
+#define VALID           0b1
+#define DIRTY           0b10
 
 typedef unsigned int address;
 
 struct CacheLine
 {
+	uint tag = 0;
 	byte value[SLOTSIZE];
+	bool IsValid();
+	bool IsDirty();
 };
+
+inline bool CacheLine::IsValid()
+{
+	return tag & VALID;
+}
+
+inline bool CacheLine::IsDirty()
+{
+	return tag & DIRTY;
+}
+
 
 class Memory
 {
@@ -29,6 +45,7 @@ public:
 	void WRITE( address a, CacheLine& line );
 	// data members
 	CacheLine* data;
+	int* tag;
 	bool artificialDelay;
 };
 
@@ -41,9 +58,10 @@ public:
 	// methods
 	byte READ( address a );
 	void WRITE( address a, byte );
+	void ResetStats();
 	// TODO: READ/WRITE functions for (aligned) 16 and 32-bit values
 	// data
 	CacheLine* slot;
 	Memory* memory;
-	int hits, misses, totalCost;
+	int hits, misses, totalCost, cacheAdd;
 };

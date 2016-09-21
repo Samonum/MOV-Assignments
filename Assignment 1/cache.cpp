@@ -64,7 +64,9 @@ Cache::Cache( Memory* mem )
 {
 	slot = new CacheLine[L1CACHESIZE / SLOTSIZE];
 	memory = mem;
-	hits = misses = totalCost = 0;
+
+	totalCost = 0;
+	ResetStats();
 }
 
 // destructor
@@ -77,10 +79,32 @@ Cache::~Cache()
 // TODO: minimize calls to memory->READ using caching
 byte Cache::READ( address a )
 {
+	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
+	{
+		if (slot[i].IsValid())
+			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
+			{
+				totalCost += L1ACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
+				hits++;					    // TODO: replace by hits++ for a hit
+				return slot[i].value[a & OFFSETMASK];
+			}
+	}
+
 	// request a full line from memory
 	CacheLine line = memory->READ( a & ADDRESSMASK );
 	// return the requested byte
 	byte returnValue = line.value[a & OFFSETMASK];
+
+	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
+	{
+		if (!slot[i].IsValid())
+		{
+			slot[i] = line;
+			slot[i].tag = (a & ADDRESSMASK) | VALID;
+			cacheAdd++;
+		}
+	}
+
 	// update memory access cost
 	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
 	misses++;					// TODO: replace by hits++ for a hit
@@ -100,4 +124,9 @@ void Cache::WRITE( address a, byte value )
 	// update memory access cost
 	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
 	misses++;					// TODO: replace by hits++ for a hit
+}
+
+void Cache::ResetStats()
+{
+	hits = misses = cacheAdd = 0;
 }

@@ -77,23 +77,26 @@ Cache::~Cache()
 
 // read a single byte from memory
 // TODO: minimize calls to memory->READ using caching
-byte Cache::READ( address a )
+byte Cache::READ(address a)
 {
+	read++;
 	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
 	{
 		if (slot[i].IsValid())
 			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
 			{
-				totalCost += L1ACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
-				hits++;					    // TODO: replace by hits++ for a hit
+				totalCost += L1ACCESSCOST;
+				hits++;
 				return slot[i].value[a & OFFSETMASK];
 			}
 	}
 
 	// request a full line from memory
-	CacheLine line = memory->READ( a & ADDRESSMASK );
+	CacheLine line = memory->READ(a & ADDRESSMASK);
 	// return the requested byte
 	byte returnValue = line.value[a & OFFSETMASK];
+	
+	bool added = false;
 
 	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
 	{
@@ -102,9 +105,24 @@ byte Cache::READ( address a )
 			slot[i] = line;
 			slot[i].tag = (a & ADDRESSMASK) | VALID;
 			cacheAdd++;
+			added = true;
+			break;
 		}
 	}
-
+	
+	if (!added)
+	{
+		int randomNumber = rand() % L1CACHESIZE / SLOTSIZE;
+		cacheAdd++;
+		evict++;
+		if (slot[randomNumber].IsDirty())
+		{
+			memory->WRITE(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
+		}
+		slot[randomNumber] = line;
+		slot[randomNumber].tag = (a & ADDRESSMASK) | VALID;
+	}
+	
 	// update memory access cost
 	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
 	misses++;					// TODO: replace by hits++ for a hit
@@ -115,6 +133,52 @@ byte Cache::READ( address a )
 // TODO: minimize calls to memory->WRITE using caching
 void Cache::WRITE( address a, byte value )
 {
+	write++;
+	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
+	{
+		if (slot[i].IsValid())
+			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
+			{
+				slot[i].value[a & OFFSETMASK] = value;
+				slot[i].tag |= DIRTY;
+				return;
+			}
+	}
+	
+	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
+	{
+		if (!slot[i].IsValid())
+		{
+			CacheLine line = memory->READ(a & ADDRESSMASK);
+			// change the byte at the correct offset
+			line.value[a & OFFSETMASK] = value;
+			line.tag = (a & ADDRESSMASK) | VALID | DIRTY;
+			slot[i] = line;
+			return;
+		}
+	}
+	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
+	{
+		int randomNumber = rand() % L1CACHESIZE / SLOTSIZE;
+		if (slot[randomNumber].IsDirty())
+		{
+			memory->WRITE(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
+		}
+		CacheLine line = memory->READ(a & ADDRESSMASK);
+		// change the byte at the correct offset
+		line.value[a & OFFSETMASK] = value;
+		line.tag = (a & ADDRESSMASK) | VALID | DIRTY;
+		slot[randomNumber] = line;
+		return;
+	}
+	/*
+	i = BestSlotToOverwrite();
+	if (cache[i].dirty) SaveToRam(i);
+	cache[i].tag = a;
+	cache[i].data[offs] = d;
+	cache[i].valid | dirty = true;	*/
+
+
 	// request a full line from memory
 	CacheLine line = memory->READ( a & ADDRESSMASK );
 	// change the byte at the correct offset
@@ -128,5 +192,5 @@ void Cache::WRITE( address a, byte value )
 
 void Cache::ResetStats()
 {
-	hits = misses = cacheAdd = 0;
+	hits = misses = cacheAdd = evict = read = write = 0;
 }

@@ -80,6 +80,7 @@ Cache::~Cache()
 byte Cache::READ(address a)
 {
 	read++;
+
 	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
 	{
 		if (slot[i].IsValid())
@@ -108,15 +109,17 @@ byte Cache::READ(address a)
 			break;
 		}
 	}
+
 	rCacheAdd++;
+
 	if (!added)
 	{
 		int randomNumber = rand() % L1CACHESIZE / SLOTSIZE;
 		rEvict++;
+
 		if (slot[randomNumber].IsDirty())
-		{
 			memory->WRITE(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
-		}
+
 		slot[randomNumber] = line;
 		slot[randomNumber].tag = (a & ADDRESSMASK) | VALID;
 	}
@@ -131,8 +134,8 @@ byte Cache::READ(address a)
 // TODO: minimize calls to memory->WRITE using caching
 void Cache::WRITE( address a, byte value )
 {
-	
 	write++;
+
 	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
 	{
 		if (slot[i].IsValid())
@@ -144,7 +147,9 @@ void Cache::WRITE( address a, byte value )
 				return;
 			}
 	}
+
 	wMisses++;
+
 	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
 	{
 		if (!slot[i].IsValid())
@@ -160,10 +165,10 @@ void Cache::WRITE( address a, byte value )
 	}
 
 	int randomNumber = rand() % L1CACHESIZE / SLOTSIZE;
+
 	if (slot[randomNumber].IsDirty())
-	{
 		memory->WRITE(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
-	}
+
 	CacheLine line = memory->READ(a & ADDRESSMASK);
 	// change the byte at the correct offset
 	line.value[a & OFFSETMASK] = value;

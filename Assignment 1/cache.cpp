@@ -80,7 +80,17 @@ Cache::~Cache()
 byte Cache::READ(address a)
 {
 	read++;
-
+	/*int slotType = a % 64;
+	if (slot[slotType].IsValid())
+	{
+		if ((a & ADDRESSMASK) == (slot[slotType].tag & ADDRESSMASK))
+		{
+			totalCost += L1ACCESSCOST;
+			rHits++;
+			return slot[slotType].value[a & OFFSETMASK];
+		}
+	}*/
+	
 	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
 	{
 		if (slot[i].IsValid())
@@ -99,6 +109,17 @@ byte Cache::READ(address a)
 	
 	bool added = false;
 
+	/*for (int i = 0; i < SLOTSIZE; i++)
+	{
+		if (!slot[i].IsValid())
+		{
+			slot[i] = line;
+			slot[i].tag = (a & ADDRESSMASK) | VALID;
+			added = true;
+			break;
+		}
+	}*/
+	
 	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
 	{
 		if (!slot[i].IsValid())
@@ -109,12 +130,13 @@ byte Cache::READ(address a)
 			break;
 		}
 	}
-
+	
 	rCacheAdd++;
 
 	if (!added)
 	{
-		int randomNumber = rand() % L1CACHESIZE / SLOTSIZE;
+		//int randomNumber = rand() % L1CACHESIZE / SLOTSIZE;
+		int randomNumber = rand() %  SLOTSIZE;
 		rEvict++;
 
 		if (slot[randomNumber].IsDirty())

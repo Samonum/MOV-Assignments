@@ -137,10 +137,12 @@ void Cache::WRITE( address a, byte value )
 				slot[i].value[a & OFFSETMASK] = value;
 				slot[i].tag |= DIRTY;
 				wHits++;
+				totalCost += L1ACCESSCOST;
 				return;
 			}
 	}
 	wMisses++;
+	totalCost += RAMACCESSCOST;
 
 	CacheLine line = memory->READ(a & ADDRESSMASK);
 	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)

@@ -1,20 +1,9 @@
-﻿Build started 21/09/2016 14:14:48.
-     1>Project "D:\Libraries\Desktop\Optimization and Vectorization\Assignments\Assignment 1\tmpl87.00_2015.vcxproj" on node 2 (Build target(s)).
-     1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /Ilib /Ilib\OpenGL /I"lib\SDL2-2.0.3\include" /Ilib\freeimage /Zi /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _CRT_SECURE_NO_DEPRECATE /Gm- /EHsc /RTC1 /MDd /GS /arch:SSE2 /fp:fast /Zc:wchar_t /Zc:forScope /Zc:inline /Yu"template.h" /Fp"Debug\Template.pch" /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt cache.cpp game.cpp
-         cache.cpp
-         game.cpp
-         Generating Code...
-       Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\Libraries\Desktop\Optimization and Vectorization\Assignments\Assignment 1\Debug\Template.exe" /INCREMENTAL:NO /NOLOGO /LIBPATH:"lib\SDL2-2.0.3\lib\x86" /LIBPATH:lib\OpenGL /LIBPATH:lib\freeimage\lib32 user32.lib winmm.lib sdl2.lib sdl2main.lib opengl32.lib freeimage.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"D:\Libraries\Desktop\Optimization and Vectorization\Assignments\Assignment 1\Debug\Template.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE:NO /IMPLIB:"D:\Libraries\Desktop\Optimization and Vectorization\Assignments\Assignment 1\Debug\Template.lib" /MACHINE:X86 /SAFESEH Debug\cache.obj
-         Debug\game.obj
-         Debug\surface.obj
-         Debug\template.obj
-         Debug\threads.obj
-     1>MSVCRTD.lib(initializers.obj) : warning LNK4098: defaultlib 'msvcrt.lib' conflicts with use of other libs; use /NODEFAULTLIB:library
-         tmpl87.00_2015.vcxproj -> D:\Libraries\Desktop\Optimization and Vectorization\Assignments\Assignment 1\Debug\Template.exe
-     1>Done Building Project "D:\Libraries\Desktop\Optimization and Vectorization\Assignments\Assignment 1\tmpl87.00_2015.vcxproj" (Build target(s)).
-
-Build succeeded.
-
-Time Elapsed 00:00:00.77
+﻿  template.cpp
+c:\users\sam\documents\uu\mov\mov-assignments\assignment 1\cache.h(33): warning C4800: 'uint': forcing value to bool 'true' or 'false' (performance warning)
+  cache.cpp
+  game.cpp
+  surface.cpp
+  threads.cpp
+  Generating Code...
+MSVCRTD.lib(initializers.obj) : warning LNK4098: defaultlib 'msvcrt.lib' conflicts with use of other libs; use /NODEFAULTLIB:library
+  tmpl87.00_2015.vcxproj -> C:\Users\sam\Documents\UU\MOV\MOV-Assignments\Assignment 1\Debug\Template.exe

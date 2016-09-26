@@ -80,7 +80,7 @@ Cache::~Cache()
 byte Cache::READ(address a)
 {
 	read++;
-	CacheLine* slot = lot[(a&SLOTMASK) >> 2].cacheLine;
+	CacheLine* slot = lot[(a&SLOTMASK) >> 6].cacheLine;
 
 	for (int i = 0; i < NWAYN; i++)
 	{
@@ -114,11 +114,7 @@ byte Cache::READ(address a)
 	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
 	rMisses++;					// TODO: replace by hits++ for a hit
 	//rCacheAdd++;
-
-	// update memory access cost
-	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
-	return returnValue;
-	/*
+	
 	int randomNumber = rand() % (NWAYN);
 	rEvict++;
 
@@ -127,15 +123,15 @@ byte Cache::READ(address a)
 
 	slot[randomNumber] = line;
 	slot[randomNumber].tag = (a & ADDRESSMASK) | VALID;
-	return returnValue;*/
+	return returnValue;
 }
 
 // write a single byte to memory
 // TODO: minimize calls to memory->WRITE using caching
 void Cache::WRITE( address a, byte value )
 {
-	/*write++;
-	CacheLine* slot = lot[(a&SLOTMASK) >> 2].cacheLine;
+	write++;
+	CacheLine* slot = lot[(a&SLOTMASK) >> 6].cacheLine;
 	for (int i = 0; i < NWAYN; i++)
 	{
 		if (slot[i].IsValid())
@@ -175,8 +171,8 @@ void Cache::WRITE( address a, byte value )
 	slot[randomNumber] = line;
 	wCacheAdd++;
 	wEvict++;
-	return;*/
-
+	return;
+	/*
 	// request a full line from memory
 	CacheLine line = memory->READ(a & ADDRESSMASK);
 	// change the byte at the correct offset
@@ -184,7 +180,7 @@ void Cache::WRITE( address a, byte value )
 	// write the line back to memory
 	memory->WRITE(a & ADDRESSMASK, line);
 	// update memory access cost
-	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
+	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit*/
 }
 
 void Cache::ResetStats()

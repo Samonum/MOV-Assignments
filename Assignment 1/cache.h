@@ -12,7 +12,7 @@
 #define L3ACCESSCOST	48
 #define VALID           0b1
 #define DIRTY           0b10
-#define SLOTMASK		0b111100
+#define SLOTMASK		0b1111000000
 #define NWAYN			8
 
 typedef unsigned int address;

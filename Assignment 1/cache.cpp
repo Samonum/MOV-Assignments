@@ -62,7 +62,7 @@ void Memory::WRITE( address a, CacheLine& line )
 // constructor
 Cache::Cache( Memory* mem )
 {
-	slot = new CacheLine[L1CACHESIZE / SLOTSIZE];
+	lot = new ParkingLot[L1CACHESIZE / SLOTSIZE / NWAYN];
 	memory = mem;
 
 	totalCost = 0;
@@ -72,7 +72,7 @@ Cache::Cache( Memory* mem )
 // destructor
 Cache::~Cache()
 {
-	delete slot;
+	delete lot;
 }
 
 // read a single byte from memory
@@ -80,7 +80,9 @@ Cache::~Cache()
 byte Cache::READ(address a)
 {
 	read++;
-	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
+	CacheLine* slot = lot[(a&SLOTMASK) >> 2].cacheLine;
+
+	for (int i = 0; i < NWAYN; i++)
 	{
 		if (slot[i].IsValid())
 			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
@@ -90,46 +92,51 @@ byte Cache::READ(address a)
 				return slot[i].value[a & OFFSETMASK];
 			}
 	}
-
 	// request a full line from memory
 	CacheLine line = memory->READ(a & ADDRESSMASK);
 	// return the requested byte
 	byte returnValue = line.value[a & OFFSETMASK];
 	
-	bool added = false;
-
-
-	// update memory access cost
-	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
-	rMisses++;					// TODO: replace by hits++ for a hit
-	rCacheAdd++;
-	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
+	for (int i = 0; i < NWAYN; i++)
 	{
 		if (!slot[i].IsValid())
 		{
 			slot[i] = line;
 			slot[i].tag = (a & ADDRESSMASK) | VALID;
+			rCacheAdd++;
 			return returnValue;
 		}
 	}
 
-	int randomNumber = rand() % (L1CACHESIZE / SLOTSIZE);
+	bool added = false;
+
+	// update memory access cost
+	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
+	rMisses++;					// TODO: replace by hits++ for a hit
+	//rCacheAdd++;
+
+	// update memory access cost
+	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
+	return returnValue;
+	/*
+	int randomNumber = rand() % (NWAYN);
 	rEvict++;
+
 	if (slot[randomNumber].IsDirty())
-	{
 		memory->WRITE(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
-	}
+
 	slot[randomNumber] = line;
 	slot[randomNumber].tag = (a & ADDRESSMASK) | VALID;
-	return returnValue;
+	return returnValue;*/
 }
 
 // write a single byte to memory
 // TODO: minimize calls to memory->WRITE using caching
 void Cache::WRITE( address a, byte value )
 {
-	write++;
-	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
+	/*write++;
+	CacheLine* slot = lot[(a&SLOTMASK) >> 2].cacheLine;
+	for (int i = 0; i < NWAYN; i++)
 	{
 		if (slot[i].IsValid())
 			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
@@ -145,7 +152,7 @@ void Cache::WRITE( address a, byte value )
 	totalCost += RAMACCESSCOST;
 
 	CacheLine line = memory->READ(a & ADDRESSMASK);
-	for (int i = 0; i < L1CACHESIZE / SLOTSIZE; i++)
+	for (int i = 0; i < NWAYN; i++)
 	{
 		if (!slot[i].IsValid())
 		{
@@ -158,19 +165,26 @@ void Cache::WRITE( address a, byte value )
 		}
 	}
 
-	int randomNumber = rand() % (L1CACHESIZE / SLOTSIZE);
+	int randomNumber = rand() % (NWAYN);
 	if (slot[randomNumber].IsDirty())
-	{
 		memory->WRITE(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
-	}
+
 	// change the byte at the correct offset
 	line.value[a & OFFSETMASK] = value;
 	line.tag = (a & ADDRESSMASK) | VALID | DIRTY;
 	slot[randomNumber] = line;
 	wCacheAdd++;
 	wEvict++;
-	return;
+	return;*/
 
+	// request a full line from memory
+	CacheLine line = memory->READ(a & ADDRESSMASK);
+	// change the byte at the correct offset
+	line.value[a & OFFSETMASK] = value;
+	// write the line back to memory
+	memory->WRITE(a & ADDRESSMASK, line);
+	// update memory access cost
+	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
 }
 
 void Cache::ResetStats()

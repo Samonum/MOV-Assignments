@@ -12,8 +12,11 @@
 #define L3ACCESSCOST	48
 #define VALID           0b1
 #define DIRTY           0b10
+#define SLOTMASK		0b111100
+#define NWAYN			8
 
 typedef unsigned int address;
+
 
 struct CacheLine
 {
@@ -22,6 +25,13 @@ struct CacheLine
 	bool IsValid();
 	bool IsDirty();
 };
+
+struct ParkingLot
+{
+	CacheLine cacheLine[NWAYN];
+	int superimportantevvictiondata;
+};
+
 
 inline bool CacheLine::IsValid()
 {
@@ -61,7 +71,7 @@ public:
 	void ResetStats();
 	// TODO: READ/WRITE functions for (aligned) 16 and 32-bit values
 	// data
-	CacheLine* slot;
+	ParkingLot* lot;
 	Memory* memory;
 	int rHits, rMisses, totalCost, rCacheAdd, rEvict, read, write, wHits, wMisses, wCacheAdd, wEvict;
 };

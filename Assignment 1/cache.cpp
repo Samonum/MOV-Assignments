@@ -22,7 +22,7 @@ Memory::~Memory()
 }
 
 // read a cacheline from memory
-CacheLine Memory::READ( address a )
+CacheLine Memory::READCL( address a )
 {
 	// verify that the requested address is the start of a cacheline in memory
 	_ASSERT( (a & OFFSETMASK) == 0 );
@@ -33,7 +33,7 @@ CacheLine Memory::READ( address a )
 }
 
 // write a cacheline to memory
-void Memory::WRITE( address a, CacheLine& line )
+void Memory::WRITECL( address a, CacheLine& line )
 {
 	// verify that the requested address is the start of a cacheline in memory
 	_ASSERT( (a & OFFSETMASK) == 0 );
@@ -60,7 +60,7 @@ void Memory::WRITE( address a, CacheLine& line )
 // ------------------------------------------------------------------
 
 // constructor
-Cache::Cache( Memory* mem )
+Cache::Cache( MemCac* mem )
 {
 	lot = new ParkingLot[L1CACHESIZE / SLOTSIZE / NWAYN];
 	memory = mem;
@@ -77,7 +77,7 @@ Cache::~Cache()
 
 // read a single byte from memory
 // TODO: minimize calls to memory->READ using caching
-byte Cache::READ(address a)
+byte Cache::READB(address a)
 {
 	read++;
 	CacheLine* slot = lot[(a&SLOTMASK) >> 6].cacheLine;
@@ -101,7 +101,7 @@ byte Cache::READ(address a)
 	// update memory access cost
 	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
 	// request a full line from memory
-	CacheLine line = memory->READ(a & ADDRESSMASK);
+	CacheLine line = memory->READCL(a & ADDRESSMASK);
 	// return the requested byte
 	byte returnValue = line.value[a & OFFSETMASK];
 	
@@ -127,7 +127,7 @@ byte Cache::READ(address a)
 	int randomNumber = rand() % (NWAYN);
 
 	if (slot[randomNumber].IsDirty())
-		memory->WRITE(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
+		memory->WRITECL(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
 
 	slot[randomNumber] = line;
 	slot[randomNumber].tag = (a & ADDRESSMASK) | VALID;
@@ -137,7 +137,7 @@ byte Cache::READ(address a)
 
 // write a single byte to memory
 // TODO: minimize calls to memory->WRITE using caching
-void Cache::WRITE( address a, byte value )
+void Cache::WRITEB( address a, byte value )
 {
 	write++;
 	CacheLine* slot = lot[(a&SLOTMASK) >> 6].cacheLine;
@@ -166,7 +166,7 @@ void Cache::WRITE( address a, byte value )
 	wMisses++;
 	totalCost += RAMACCESSCOST;
 
-	CacheLine line = memory->READ(a & ADDRESSMASK);
+	CacheLine line = memory->READCL(a & ADDRESSMASK);
 	for (int i = 0; i < NWAYN; i++)
 	{
 		if (!slot[i].IsValid())
@@ -187,7 +187,7 @@ void Cache::WRITE( address a, byte value )
 	int randomNumber = rand() % (NWAYN);
 
 	if (slot[randomNumber].IsDirty())
-		memory->WRITE(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
+		memory->WRITECL(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
 
 	// change the byte at the correct offset
 	line.value[a & OFFSETMASK] = value;

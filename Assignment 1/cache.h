@@ -45,6 +45,11 @@ inline bool CacheLine::IsDirty()
 
 class MemCac
 {
+public:
+	virtual byte READB(address a) = 0;
+	virtual CacheLine READCL(address a) = 0;
+	virtual void WRITEB(address a, byte) = 0;
+	virtual void WRITECL(address a, CacheLine& line) = 0;
 
 };
 
@@ -54,9 +59,10 @@ public:
 	// ctor/dtor
 	Memory( uint size );
 	~Memory();
-	// methods
-	CacheLine READ( address a );
-	void WRITE( address a, CacheLine& line );
+	byte READB(address a) { return 0; };
+	CacheLine READCL(address a);
+	void WRITEB(address a, byte) {};
+	void WRITECL(address a, CacheLine& line);
 	// data members
 	CacheLine* data;
 	int* tag;
@@ -67,15 +73,21 @@ class Cache: public MemCac
 {
 public:
 	// ctor/dtor
-	Cache( Memory* mem );
+	Cache( MemCac* mem );
 	~Cache();
 	// methods
-	byte READ( address a );
-	void WRITE( address a, byte );
+	byte READB(address a);
+	CacheLine READCL(address a)
+	{
+		CacheLine haoifjsiufh;
+		return haoifjsiufh;
+	};
+	void WRITEB(address a, byte);
+	void WRITECL(address a, CacheLine& line) {};
 	void ResetStats();
 	// TODO: READ/WRITE functions for (aligned) 16 and 32-bit values
 	// data
 	ParkingLot* lot;
-	Memory* memory;
+	MemCac* memory;
 	int rHits, rMisses, totalCost, rCacheAdd, rEvict, read, write, wHits, wMisses, wCacheAdd, wEvict;
 };

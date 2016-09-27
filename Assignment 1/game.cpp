@@ -25,12 +25,12 @@ void Game::Init()
 void Game::Set( int x, int y, byte value )
 {
 	address a = x + y * 513;
-	cache->WRITE( a, value );
+	cache->WRITEB( a, value );
 }
 byte Game::Get( int x, int y )
 {
 	address a = x + y * 513;
-	return cache->READ( a );	
+	return cache->READB( a );
 }
 
 // -----------------------------------------------------------

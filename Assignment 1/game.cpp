@@ -7,7 +7,9 @@ void Game::Init()
 {
 	// instantiate simulated memory and cache
 	memory = new Memory( 1024 * 1024 ); // allocate 1MB
-	cache = new Cache( memory , L1CACHESIZE);
+	cacheL3 = new Cache(memory, L3CACHESIZE);
+	cacheL2 = new Cache(cacheL3, L2CACHESIZE);
+	cacheL1 = new Cache(cacheL2, L1CACHESIZE);
 	// intialize fractal algorithm
 	srand( 1000 );
 	Set( 0, 0, IRand( 255 ) );
@@ -25,12 +27,12 @@ void Game::Init()
 void Game::Set( int x, int y, byte value )
 {
 	address a = x + y * 513;
-	cache->WRITEB( a, value );
+	cacheL1->WRITEB( a, value );
 }
 byte Game::Get( int x, int y )
 {
 	address a = x + y * 513;
-	return cache->READB( a );
+	return cacheL1->READB( a );
 }
 
 // -----------------------------------------------------------
@@ -70,16 +72,16 @@ void Game::Tick( float dt )
 		Subdivide( x1, y1, x2, y2, task[taskPtr].scale );
 	}
 	// report on memory access cost (134M before your improvements :) )
-	printf( "total memory access cost: %iM cycles\n", cache->totalCost / 1000000 );
-	printf("Read %i, hits:misses %i:%i, evictions / cacheAdds %i / %i\n", cache->read, cache->rHits, cache->rMisses, cache->rEvict, cache->rCacheAdd);
-	printf("Write %i, hits:misses %i:%i, evictions / cacheAdds %i / %i\n", cache->write, cache->wHits, cache->wMisses, cache->wEvict, cache->wCacheAdd);
-	cache->ResetStats();
+	printf( "total memory access cost: %iM cycles\n", cacheL1->totalCost / 1000000 );
+	printf("Read %i, hits:misses %i:%i, evictions / cacheAdds %i / %i\n", cacheL1->read, cacheL1->rHits, cacheL1->rMisses, cacheL1->rEvict, cacheL1->rCacheAdd);
+	printf("Write %i, hits:misses %i:%i, evictions / cacheAdds %i / %i\n", cacheL1->write, cacheL1->wHits, cacheL1->wMisses, cacheL1->wEvict, cacheL1->wCacheAdd);
+	cacheL1->ResetStats();
 	// visualize current state
 	// artificial RAM access delay and cost counting are disabled here
-	memory->artificialDelay = false, c = cache->totalCost;
+	memory->artificialDelay = false, c = cacheL1->totalCost;
 	for( int y = 0; y < 513; y++ ) for( int x = 0; x < 513; x++ ) 
 		screen->Plot( x + 140, y + 60, GREY( Get( x, y ) ) );
-	memory->artificialDelay = true, cache->totalCost = c;
+	memory->artificialDelay = true, cacheL1->totalCost = c;
 }
 
 // -----------------------------------------------------------
@@ -88,5 +90,5 @@ void Game::Tick( float dt )
 void Game::Shutdown()
 {
 	delete memory;
-	delete cache;
+	delete cacheL1;
 }

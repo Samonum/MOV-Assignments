@@ -73,7 +73,7 @@ class Cache: public MemCac
 {
 public:
 	// ctor/dtor
-	Cache( MemCac* mem );
+	Cache( MemCac* mem , int cSize);
 	~Cache();
 	// methods
 	byte READB(address a);
@@ -90,4 +90,5 @@ public:
 	ParkingLot* lot;
 	MemCac* memory;
 	int rHits, rMisses, totalCost, rCacheAdd, rEvict, read, write, wHits, wMisses, wCacheAdd, wEvict;
+	int cacheSize = 0;
 };

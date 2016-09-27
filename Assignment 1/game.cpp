@@ -7,7 +7,7 @@ void Game::Init()
 {
 	// instantiate simulated memory and cache
 	memory = new Memory( 1024 * 1024 ); // allocate 1MB
-	cache = new Cache( memory );
+	cache = new Cache( memory , L1CACHESIZE);
 	// intialize fractal algorithm
 	srand( 1000 );
 	Set( 0, 0, IRand( 255 ) );

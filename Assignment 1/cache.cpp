@@ -60,9 +60,10 @@ void Memory::WRITECL( address a, CacheLine& line )
 // ------------------------------------------------------------------
 
 // constructor
-Cache::Cache( MemCac* mem )
+Cache::Cache( MemCac* mem, int cSize )
 {
-	lot = new ParkingLot[L1CACHESIZE / SLOTSIZE / NWAYN];
+	cacheSize = cSize;
+	lot = new ParkingLot[cSize / SLOTSIZE / NWAYN];
 	memory = mem;
 
 	totalCost = 0;

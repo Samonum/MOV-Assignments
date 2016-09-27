@@ -43,8 +43,12 @@ inline bool CacheLine::IsDirty()
 	return tag & DIRTY;
 }
 
+class MemCac
+{
 
-class Memory
+};
+
+class Memory: public MemCac
 {
 public:
 	// ctor/dtor
@@ -59,7 +63,7 @@ public:
 	bool artificialDelay;
 };
 
-class Cache
+class Cache: public MemCac
 {
 public:
 	// ctor/dtor

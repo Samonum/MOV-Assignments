@@ -62,7 +62,7 @@ void Memory::WRITECL( address a, CacheLine& line )
 // constructor
 Cache::Cache( MemCac* mem, int cSize, int l )
 {
-	cacheSize = cSize;
+	slotMask = ((cSize / SLOTSIZE / NWAYN) - 1) << 6;
 	lot = new ParkingLot[cSize / SLOTSIZE / NWAYN];
 	memory = mem;
 	level = l;
@@ -81,7 +81,7 @@ Cache::~Cache()
 byte Cache::READB(address a)
 {
 	read++;
-	CacheLine* slot = lot[(a&SLOTMASK) >> 6].cacheLine;
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
 
 	// -----------------------------------
 	// Search for the address in the cache
@@ -141,7 +141,7 @@ byte Cache::READB(address a)
 CacheLine Cache::READCL(address a)
 {
 	read++;
-	CacheLine* slot = lot[(a&SLOTMASK) >> 6].cacheLine;
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
 
 	// -----------------------------------
 	// Search for the address in the cache
@@ -201,7 +201,7 @@ CacheLine Cache::READCL(address a)
 void Cache::WRITEB( address a, byte value )
 {
 	write++;
-	CacheLine* slot = lot[(a&SLOTMASK) >> 6].cacheLine;
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
 
 	// -----------------------------------
 	// Search for the address in the cache
@@ -264,7 +264,7 @@ void Cache::WRITEB( address a, byte value )
 void Cache::WRITECL(address a, CacheLine& line)
 {
 	write++;
-	CacheLine* slot = lot[(a&SLOTMASK) >> 6].cacheLine;
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
 
 	// -----------------------------------
 	// Search for the address in the cache

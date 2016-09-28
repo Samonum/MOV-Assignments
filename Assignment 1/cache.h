@@ -12,8 +12,8 @@
 #define L3ACCESSCOST	48
 #define VALID           0b1
 #define DIRTY           0b10
-#define SLOTMASK		0b1111000000
 #define NWAYN			8
+#define SLOTMASK
 
 typedef unsigned int address;
 
@@ -86,5 +86,5 @@ public:
 	ParkingLot* lot;
 	MemCac* memory;
 	int rHits, rMisses, totalCost, rCacheAdd, rEvict, read, write, wHits, wMisses, wCacheAdd, wEvict, level = 0;
-	int cacheSize = 0;
+	int slotMask;
 };

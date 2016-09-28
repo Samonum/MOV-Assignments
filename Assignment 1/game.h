@@ -1,7 +1,7 @@
 #pragma once
 
 #define SCRWIDTH	 800
-#define SCRHEIGHT	 640
+#define SCRHEIGHT	 800
 #define L1CACHECOLOR 0x33FF33
 #define L2CACHECOLOR 0xFFFF33
 #define L3CACHECOLOR 0xFF9933
@@ -32,6 +32,7 @@ public:
 	}
 	void Subdivide( int x1, int y1, int x2, int y2, int scale );
 	void Tick( float dt );
+	void DrawGraph();
 	void MouseUp( int _Button ) { /* implement if you want to detect mouse button presses */ }
 	void MouseDown( int _Button ) { /* implement if you want to detect mouse button presses */ }
 	void MouseMove( int _X, int _Y ) { /* implement if you want to detect mouse movement */ }
@@ -44,6 +45,8 @@ private:
 	Cache* cacheL2;
 	Cache* cacheL3;
 	Task task[512];
+	int performanceGraph[SCRWIDTH][4];
+	int graphPointer;
 	int taskPtr, c;
 };
 

@@ -81,13 +81,52 @@ void Game::Tick( float dt )
 	cacheL1->ConsoleDebug();
 	cacheL2->ConsoleDebug();
 	cacheL3->ConsoleDebug();
+	DrawGraph();
 	cacheL1->ResetStats();
 	cacheL2->ResetStats();
 	cacheL3->ResetStats();
 	// visualize current state
 	// artificial RAM access delay and cost counting are disabled here
+
+	
 	for (int y = 0; y < 513; y++) for (int x = 0; x < 513; x++)
 		screen->Plot(x + 140, y + 60, GREY(m[x + y * 513]));
+}
+
+void Game::DrawGraph()
+{
+	int l1 = cacheL1->rHits + cacheL1->wHits;
+	int l2 = cacheL2->rHits + cacheL2->wHits;
+	int l3 = cacheL3->rHits + cacheL3->wHits;
+	int mem = cacheL3->rMisses + cacheL3->wMisses;
+	int total = l1 + l2 + l3 + mem;
+	float l1p = (float)l1 / (float)total;
+	float l2p = (float)l2 / (float)total;
+	float l3p = (float)l3 / (float)total;
+	float memp = (float)mem / (float)total;
+	int x1 = l1p * SCRWIDTH;
+	int x2 = l2p * SCRWIDTH + x1;
+	int x3 = l3p * SCRWIDTH + x2;
+	int xm = memp * SCRWIDTH + x3;
+	for (int y = 573; y < 640; y++)
+	{
+		for (int x = 0; x < x1; x++)
+		{
+			screen->Plot(x, y, L1CACHECOLOR);
+		}
+		for (int x = x1; x < x2; x++)
+		{
+			screen->Plot(x, y, L2CACHECOLOR);
+		}
+		for (int x = x2; x < x3; x++)
+		{
+			screen->Plot(x, y, L3CACHECOLOR);
+		}
+		for (int x = x3; x < xm; x++)
+		{
+			screen->Plot(x, y, RAMCOLOR);
+		}
+	}
 }
 
 // -----------------------------------------------------------

@@ -112,10 +112,9 @@ void Game::DrawGraph()
 	performanceGraph[graphPointer][0] = y1;
 	performanceGraph[graphPointer][1] = y2;
 	performanceGraph[graphPointer][2] = y3;
-	if (graphPointer < SCRWIDTH - 1)
-		graphPointer++;
-	else
-		graphPointer = 0;
+
+	float percent = (float)total / 10000.0f;
+	totalWorkGraph[graphPointer] = SCRHEIGHT - graphHeight * percent;
 
 	for (int y = 580; y < SCRHEIGHT; y++)
 		for (int x = 0; x < graphPointer; x++)
@@ -131,9 +130,16 @@ void Game::DrawGraph()
 			screen->Plot(x, y, L2CACHECOLOR);
 		for (int y = performanceGraph[x][2]; y < SCRHEIGHT; y++)
 			screen->Plot(x, y, L1CACHECOLOR);
+		for (int  y = (totalWorkGraph[x] -2); y < (totalWorkGraph[x] + 2); y++)
+			screen->Plot(x, y, 0x0000FF);
 	}
 	for (int y = 540; y < SCRHEIGHT; y++)
 		screen->Plot(graphPointer, y, DARKNESS);
+
+	if (graphPointer < SCRWIDTH - 1)
+		graphPointer++;
+	else
+		graphPointer = 0;
 }
 
 // -----------------------------------------------------------

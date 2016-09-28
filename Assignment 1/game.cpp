@@ -100,6 +100,8 @@ void Game::DrawGraph()
 	int l3 = (cacheL3->rHits + cacheL3->wHits) * L3ACCESSCOST;
 	int mem = (cacheL3->rMisses + cacheL3->wMisses) * RAMACCESSCOST;
 	int total = l1 + l2 + l3 + mem;
+	if (total == 0)
+		return;
 	//float l1p = (float)l1 / (float)total;
 	float l2p = (float)l2 / (float)total;
 	float l3p = (float)l3 / (float)total;

@@ -51,7 +51,6 @@ private:
 	int performanceGraph[SCRWIDTH / 4][3];
 	int totalWorkGraph[SCRWIDTH / 4];
 	int graphPointer = 0;
-	int graphLength = 0;
 	int taskPtr, c;
 };
 

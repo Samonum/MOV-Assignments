@@ -124,21 +124,21 @@ void Game::DrawGraph()
 
 	for (int x = 0; x < graphPointer; x++)
 	{
-		for (int y = 580; y <performanceGraph[x][0]; y++)
-			screen->Plot(x, y, RAMCOLOR);
+		for (int y = 580; y < performanceGraph[x][0]; y++)
+			screen->Plot(x * 4, y, RAMCOLOR);
 		for (int y = performanceGraph[x][0]; y < performanceGraph[x][1]; y++)
-			screen->Plot(x, y, L3CACHECOLOR);
+			screen->Plot(x * 4, y, L3CACHECOLOR);
 		for (int y = performanceGraph[x][1]; y < performanceGraph[x][2]; y++)
-			screen->Plot(x, y, L2CACHECOLOR);
+			screen->Plot(x * 4, y, L2CACHECOLOR);
 		for (int y = performanceGraph[x][2]; y < SCRHEIGHT; y++)
-			screen->Plot(x, y, L1CACHECOLOR);
+			screen->Plot(x * 4, y, L1CACHECOLOR);
 		for (int  y = (totalWorkGraph[x] -2); y < (totalWorkGraph[x] + 2); y++)
-			screen->Plot(x, y, 0x0000FF);
+			screen->Plot(x * 4, y, 0x0000FF);
 	}
 	for (int y = 540; y < SCRHEIGHT; y++)
-		screen->Plot(graphPointer, y, DARKNESS);
+		screen->Plot(graphPointer * 4, y, DARKNESS);
 
-	if (graphPointer < SCRWIDTH - 1)
+	if (graphPointer < SCRWIDTH / 4 - 1)
 		graphPointer++;
 	else
 		graphPointer = 0;

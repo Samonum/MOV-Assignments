@@ -46,8 +46,8 @@ private:
 	Cache* cacheL2;
 	Cache* cacheL3;
 	Task task[512];
-	int performanceGraph[SCRWIDTH][3];
-	int totalWorkGraph[SCRWIDTH];
+	int performanceGraph[SCRWIDTH / 4][3];
+	int totalWorkGraph[SCRWIDTH / 4];
 	int graphPointer = 0;
 	int graphLength = 0;
 	int taskPtr, c;

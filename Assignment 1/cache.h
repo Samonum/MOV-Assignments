@@ -14,8 +14,8 @@
 #define DIRTY           0b10
 #define NWAYN			8
 
-#define EVICTION		2						// 0 = random, 1 = FIFO, 2 = LRU?
-
+#define EVICTION		3						// 0 = random, 1 = FIFO, 2 = Bit-PLRU, 3 = Tree-PLRU
+#define LRUMARKER		0b100
 typedef unsigned int address;
 
 struct CacheLine
@@ -79,6 +79,8 @@ public:
 	// methods
 	byte READB(address a);
 	CacheLine READCL(address a, bool write = false);
+	void UpdateLRUTree(ParkingLot &lot, int i);
+	int TreeFindLRU(ParkingLot &lot);
 	CacheLine ReadMiss(address a, bool isWrite);
 	void WRITEB(address a, byte);
 	void WRITECL(address a, CacheLine& line);

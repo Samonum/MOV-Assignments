@@ -3,10 +3,12 @@
 #define SCRWIDTH	 800
 #define SCRHEIGHT	 800
 #define L1CACHECOLOR 0x33FF33
-#define L2CACHECOLOR 0xFFFF33
-#define L3CACHECOLOR 0xFF9933
+#define L2CACHECOLOR 0x337733
+#define L3CACHECOLOR 0xFFFF33
 #define RAMCOLOR     0xFF3333
 #define DARKNESS     0x000000
+#define HIBLU        0x00EEEE
+#define LOBLU        0x009999
 
 namespace Tmpl8 {
 

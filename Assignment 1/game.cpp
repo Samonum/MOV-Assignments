@@ -132,8 +132,14 @@ void Game::DrawGraph()
 			screen->Plot(x * 4, y, L2CACHECOLOR);
 		for (int y = performanceGraph[x][2]; y < SCRHEIGHT; y++)
 			screen->Plot(x * 4, y, L1CACHECOLOR);
-		for (int  y = (totalWorkGraph[x] -2); y < (totalWorkGraph[x] + 2); y++)
-			screen->Plot(x * 4, y, 0x0000FF);
+		for (int y = (totalWorkGraph[x] - 2); y < (totalWorkGraph[x] + 2); y++)
+		{
+			if (totalWorkGraph[x] < performanceGraph[x][2])
+				screen->Plot(x * 4, y, HIBLU);
+			else
+				screen->Plot(x * 4, y, LOBLU);
+		}
+			
 	}
 	for (int y = 540; y < SCRHEIGHT; y++)
 		screen->Plot(graphPointer * 4, y, DARKNESS);

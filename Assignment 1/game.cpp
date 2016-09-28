@@ -95,10 +95,10 @@ void Game::Tick( float dt )
 
 void Game::DrawGraph()
 {
-	int l1 = cacheL1->rHits + cacheL1->wHits;
-	int l2 = cacheL2->rHits + cacheL2->wHits;
-	int l3 = cacheL3->rHits + cacheL3->wHits;
-	int mem = cacheL3->rMisses + cacheL3->wMisses;
+	int l1 = (cacheL1->rHits + cacheL1->wHits) * L1ACCESSCOST;
+	int l2 = (cacheL2->rHits + cacheL2->wHits) * L2ACCESSCOST;
+	int l3 = (cacheL3->rHits + cacheL3->wHits) * L3ACCESSCOST;
+	int mem = (cacheL3->rMisses + cacheL3->wMisses)* RAMACCESSCOST;
 	int total = l1 + l2 + l3 + mem;
 	float l1p = (float)l1 / (float)total;
 	float l2p = (float)l2 / (float)total;

@@ -98,35 +98,42 @@ void Game::DrawGraph()
 	int l1 = (cacheL1->rHits + cacheL1->wHits) * L1ACCESSCOST;
 	int l2 = (cacheL2->rHits + cacheL2->wHits) * L2ACCESSCOST;
 	int l3 = (cacheL3->rHits + cacheL3->wHits) * L3ACCESSCOST;
-	int mem = (cacheL3->rMisses + cacheL3->wMisses)* RAMACCESSCOST;
+	int mem = (cacheL3->rMisses + cacheL3->wMisses) * RAMACCESSCOST;
 	int total = l1 + l2 + l3 + mem;
-	float l1p = (float)l1 / (float)total;
+	//float l1p = (float)l1 / (float)total;
 	float l2p = (float)l2 / (float)total;
 	float l3p = (float)l3 / (float)total;
 	float memp = (float)mem / (float)total;
-	int x1 = l1p * SCRWIDTH;
-	int x2 = l2p * SCRWIDTH + x1;
-	int x3 = l3p * SCRWIDTH + x2;
-	int xm = memp * SCRWIDTH + x3;
-	for (int y = 573; y < 640; y++)
+	int graphHeight = SCRHEIGHT - 580;
+	int y1 = 580 + graphHeight * memp;
+	int y2 = y1 + graphHeight * l3p;
+	int y3 = y2 + graphHeight * l2p;
+
+	performanceGraph[graphPointer][0] = y1;
+	performanceGraph[graphPointer][1] = y2;
+	performanceGraph[graphPointer][2] = y3;
+	if (graphPointer < SCRWIDTH - 1)
+		graphPointer++;
+	else
+		graphPointer = 0;
+
+	for (int y = 580; y < SCRHEIGHT; y++)
+		for (int x = 0; x < graphPointer; x++)
+			screen->Plot(x, y, DARKNESS);
+
+	for (int x = 0; x < graphPointer; x++)
 	{
-		for (int x = 0; x < x1; x++)
-		{
-			screen->Plot(x, y, L1CACHECOLOR);
-		}
-		for (int x = x1; x < x2; x++)
-		{
-			screen->Plot(x, y, L2CACHECOLOR);
-		}
-		for (int x = x2; x < x3; x++)
-		{
-			screen->Plot(x, y, L3CACHECOLOR);
-		}
-		for (int x = x3; x < xm; x++)
-		{
+		for (int y = 580; y <performanceGraph[x][0]; y++)
 			screen->Plot(x, y, RAMCOLOR);
-		}
+		for (int y = performanceGraph[x][0]; y < performanceGraph[x][1]; y++)
+			screen->Plot(x, y, L3CACHECOLOR);
+		for (int y = performanceGraph[x][1]; y < performanceGraph[x][2]; y++)
+			screen->Plot(x, y, L2CACHECOLOR);
+		for (int y = performanceGraph[x][2]; y < SCRHEIGHT; y++)
+			screen->Plot(x, y, L1CACHECOLOR);
 	}
+	for (int y = 540; y < SCRHEIGHT; y++)
+		screen->Plot(graphPointer, y, DARKNESS);
 }
 
 // -----------------------------------------------------------

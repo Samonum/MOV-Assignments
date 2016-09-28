@@ -6,6 +6,7 @@
 #define L2CACHECOLOR 0xFFFF33
 #define L3CACHECOLOR 0xFF9933
 #define RAMCOLOR     0xFF3333
+#define DARKNESS     0x000000
 
 namespace Tmpl8 {
 
@@ -45,8 +46,9 @@ private:
 	Cache* cacheL2;
 	Cache* cacheL3;
 	Task task[512];
-	int performanceGraph[SCRWIDTH][4];
-	int graphPointer;
+	int performanceGraph[SCRWIDTH][3];
+	int graphPointer = 0;
+	int graphLength = 0;
 	int taskPtr, c;
 };
 

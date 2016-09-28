@@ -14,6 +14,8 @@
 #define DIRTY           0b10
 #define NWAYN			8
 
+#define EVICTION		2						// 0 = random, 1 = FIFO, 2 = LRU?
+
 typedef unsigned int address;
 
 struct CacheLine
@@ -27,7 +29,7 @@ struct CacheLine
 struct ParkingLot
 {
 	CacheLine cacheLine[NWAYN];
-	int superimportantevvictiondata;
+	int evictionData = 0;
 };
 
 
@@ -77,6 +79,7 @@ public:
 	// methods
 	byte READB(address a);
 	CacheLine READCL(address a, bool write = false);
+	CacheLine ReadMiss(address a, bool isWrite);
 	void WRITEB(address a, byte);
 	void WRITECL(address a, CacheLine& line);
 	void ResetStats();

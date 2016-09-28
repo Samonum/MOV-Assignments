@@ -1,5 +1,7 @@
 #include "template.h"
 
+
+unsigned char m[513 * 513];
 // -----------------------------------------------------------
 // Initialize the application
 // -----------------------------------------------------------
@@ -28,6 +30,7 @@ void Game::Set( int x, int y, byte value )
 {
 	address a = x + y * 513;
 	cacheL1->WRITEB( a, value );
+	m[a] = value;
 }
 byte Game::Get( int x, int y )
 {
@@ -79,12 +82,12 @@ void Game::Tick( float dt )
 	cacheL2->ConsoleDebug();
 	cacheL3->ConsoleDebug();
 	cacheL1->ResetStats();
+	cacheL2->ResetStats();
+	cacheL3->ResetStats();
 	// visualize current state
 	// artificial RAM access delay and cost counting are disabled here
-	memory->artificialDelay = false, c = cacheL1->totalCost;
-	for( int y = 0; y < 513; y++ ) for( int x = 0; x < 513; x++ ) 
-		screen->Plot( x + 140, y + 60, GREY( Get( x, y ) ) );
-	memory->artificialDelay = true, cacheL1->totalCost = c;
+	for (int y = 0; y < 513; y++) for (int x = 0; x < 513; x++)
+		screen->Plot(x + 140, y + 60, GREY(m[x + y * 513]));
 }
 
 // -----------------------------------------------------------

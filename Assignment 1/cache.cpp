@@ -22,7 +22,7 @@ Memory::~Memory()
 }
 
 // read a cacheline from memory
-CacheLine Memory::READCL( address a )
+CacheLine Memory::READCL( address a , bool write)
 {
 	// verify that the requested address is the start of a cacheline in memory
 	_ASSERT( (a & OFFSETMASK) == 0 );
@@ -41,6 +41,11 @@ void Memory::WRITECL( address a, CacheLine& line )
 	if (artificialDelay) delay();
 	// write the supplied data to memory
 	data[a / SLOTSIZE] = line;
+}
+
+void Memory::ConsoleWrite()
+{
+
 }
 
 // ------------------------------------------------------------------
@@ -80,67 +85,17 @@ Cache::~Cache()
 // TODO: minimize calls to memory->READ using caching
 byte Cache::READB(address a)
 {
-	read++;
-	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
-
-	// -----------------------------------
-	// Search for the address in the cache
-	// -----------------------------------
-
-	for (int i = 0; i < NWAYN; i++)
-	{
-		if (slot[i].IsValid())
-			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
-			{
-				rHits++;
-				totalCost += L1ACCESSCOST;
-				return slot[i].value[a & OFFSETMASK];
-			}
-	}
-
-	rMisses++;
-	// update memory access cost
-	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
-	// request a full line from memory
-	CacheLine line = memory->READCL(a & ADDRESSMASK);
-	// return the requested byte
-	byte returnValue = line.value[a & OFFSETMASK];
-	
-	// -----------------------------------------------------
-	// Try to find an invalid slot in the cache to overwrite
-	// -----------------------------------------------------
-
-	for (int i = 0; i < NWAYN; i++)
-	{
-		if (!slot[i].IsValid())
-		{
-			slot[i] = line;
-			slot[i].tag = (a & ADDRESSMASK) | VALID;
-			rCacheAdd++;
-			return returnValue;
-		}
-	}
-	
-	// --------------------------------------
-	// Evict a slot to make room for new data
-	// --------------------------------------
-
-	int randomNumber = rand() % (NWAYN);
-
-	if (slot[randomNumber].IsDirty())
-		memory->WRITECL(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
-
-	slot[randomNumber] = line;
-	slot[randomNumber].tag = (a & ADDRESSMASK) | VALID;
-	rEvict++;
-	return returnValue;
+	return READCL(a).value[a & OFFSETMASK];
 }
 
 // read a single byte from memory
 // TODO: minimize calls to memory->READ using caching
-CacheLine Cache::READCL(address a)
+CacheLine Cache::READCL(address a, bool isWrite)
 {
-	read++;
+	if (!isWrite)
+		read++;
+	else
+		write++;
 	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
 
 	// -----------------------------------
@@ -152,17 +107,22 @@ CacheLine Cache::READCL(address a)
 		if (slot[i].IsValid())
 			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
 			{
-				rHits++;
+				if (!isWrite)
+					rHits++;
+				else
+					wHits++;
 				totalCost += L1ACCESSCOST;
 				return slot[i];
 			}
 	}
-
-	rMisses++;
+	if (!isWrite)
+		rMisses++;
+	else
+		wMisses++;
 	// update memory access cost
 	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
 								// request a full line from memory
-	CacheLine line = memory->READCL(a & ADDRESSMASK);
+	CacheLine line = memory->READCL(a & ADDRESSMASK, isWrite);
 	// return the requested byte
 	byte returnValue = line.value[a & OFFSETMASK];
 
@@ -176,7 +136,10 @@ CacheLine Cache::READCL(address a)
 		{
 			slot[i] = line;
 			slot[i].tag = (a & ADDRESSMASK) | VALID;
-			rCacheAdd++;
+			if (!write)
+				rCacheAdd++;
+			else
+				wCacheAdd++;
 			return line;
 		}
 	}
@@ -192,7 +155,10 @@ CacheLine Cache::READCL(address a)
 
 	slot[randomNumber] = line;
 	slot[randomNumber].tag = (a & ADDRESSMASK) | VALID;
-	rEvict++;
+	if (!isWrite)
+		rEvict++;
+	else
+		wEvict++;
 	return line;
 }
 
@@ -200,76 +166,30 @@ CacheLine Cache::READCL(address a)
 // TODO: minimize calls to memory->WRITE using caching
 void Cache::WRITEB( address a, byte value )
 {
-	write++;
+	CacheLine cl = READCL(a, true);
+	cl.value[a&OFFSETMASK] = value;
+	cl.tag |= DIRTY | VALID;
+
 	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
-
-	// -----------------------------------
-	// Search for the address in the cache
-	// -----------------------------------
-
 	for (int i = 0; i < NWAYN; i++)
 	{
 		if (slot[i].IsValid())
 			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
 			{
-				slot[i].value[a & OFFSETMASK] = value;
+				slot[i] = cl;
 				slot[i].tag |= DIRTY;
-				wHits++;
 				totalCost += L1ACCESSCOST;
 				return;
 			}
 	}
-
-	// -----------------------------------------------------
-	// Try to find an invalid slot in the cache to overwrite
-	// -----------------------------------------------------
-
-	wMisses++;
-	totalCost += RAMACCESSCOST;
-
-	CacheLine line = memory->READCL(a & ADDRESSMASK);
-	for (int i = 0; i < NWAYN; i++)
-	{
-		if (!slot[i].IsValid())
-		{
-			// change the byte at the correct offset
-			line.value[a & OFFSETMASK] = value;
-			line.tag = (a & ADDRESSMASK) | VALID | DIRTY;
-			slot[i] = line;
-			wCacheAdd++;
-			return;
-		}
-	}
-
-	// --------------------------------------
-	// Evict a slot to make room for new data
-	// --------------------------------------
-
-	int randomNumber = rand() % (NWAYN);
-
-	if (slot[randomNumber].IsDirty())
-		memory->WRITECL(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
-
-	// change the byte at the correct offset
-	line.value[a & OFFSETMASK] = value;
-	line.tag = (a & ADDRESSMASK) | VALID | DIRTY;
-	slot[randomNumber] = line;
-	wEvict++;
-	return;
 }
-
 
 // write a single byte to memory
 // TODO: minimize calls to memory->WRITE using caching
 void Cache::WRITECL(address a, CacheLine& line)
 {
-	write++;
+	CacheLine cl = READCL(a, true);
 	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
-
-	// -----------------------------------
-	// Search for the address in the cache
-	// -----------------------------------
-
 	for (int i = 0; i < NWAYN; i++)
 	{
 		if (slot[i].IsValid())
@@ -277,50 +197,11 @@ void Cache::WRITECL(address a, CacheLine& line)
 			{
 				slot[i] = line;
 				slot[i].tag |= DIRTY;
-				wHits++;
 				totalCost += L1ACCESSCOST;
 				return;
 			}
 	}
-
-	// -----------------------------------------------------
-	// Try to find an invalid slot in the cache to overwrite
-	// -----------------------------------------------------
-
-	wMisses++;
-	totalCost += RAMACCESSCOST;
-
-	//CacheLine line = memory->READCL(a & ADDRESSMASK);
-	for (int i = 0; i < NWAYN; i++)
-	{
-		if (!slot[i].IsValid())
-		{
-			// change the byte at the correct offset
-			/*line.value[a & OFFSETMASK] = value;
-			line.tag = (a & ADDRESSMASK) | VALID | DIRTY;*/
-			slot[i] = line;
-			wCacheAdd++;
-			return;
-		}
-	}
-
-	// --------------------------------------
-	// Evict a slot to make room for new data
-	// --------------------------------------
-
-	int randomNumber = rand() % (NWAYN);
-
-	if (slot[randomNumber].IsDirty())
-		memory->WRITECL(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
-
-	// change the byte at the correct offset
-	/*line.value[a & OFFSETMASK] = value;
-	line.tag = (a & ADDRESSMASK) | VALID | DIRTY;*/
-	slot[randomNumber] = line;
-	wEvict++;
-	return;
 }
-
 
 void Cache::ResetStats()
 {

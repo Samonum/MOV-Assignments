@@ -13,10 +13,8 @@
 #define VALID           0b1
 #define DIRTY           0b10
 #define NWAYN			8
-#define SLOTMASK
 
 typedef unsigned int address;
-
 
 struct CacheLine
 {
@@ -47,7 +45,7 @@ class MemCac
 {
 public:
 	virtual byte READB(address a) = 0;
-	virtual CacheLine READCL(address a) = 0;
+	virtual CacheLine READCL(address a, bool wrrite = false) = 0;
 	virtual void WRITEB(address a, byte) = 0;
 	virtual void WRITECL(address a, CacheLine& line) = 0;
 };
@@ -59,13 +57,15 @@ public:
 	Memory( uint size );
 	~Memory();
 	byte READB(address a) { return 0; };
-	CacheLine READCL(address a);
+	CacheLine READCL(address a, bool write = false);
 	void WRITEB(address a, byte) {};
 	void WRITECL(address a, CacheLine& line);
+	void ConsoleWrite();
 	// data members
 	CacheLine* data;
 	int* tag;
 	bool artificialDelay;
+	int read, write;
 };
 
 class Cache: public MemCac
@@ -76,7 +76,7 @@ public:
 	~Cache();
 	// methods
 	byte READB(address a);
-	CacheLine READCL(address a);
+	CacheLine READCL(address a, bool write = false);
 	void WRITEB(address a, byte);
 	void WRITECL(address a, CacheLine& line);
 	void ResetStats();

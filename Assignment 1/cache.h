@@ -50,7 +50,6 @@ public:
 	virtual CacheLine READCL(address a) = 0;
 	virtual void WRITEB(address a, byte) = 0;
 	virtual void WRITECL(address a, CacheLine& line) = 0;
-
 };
 
 class Memory: public MemCac
@@ -73,22 +72,19 @@ class Cache: public MemCac
 {
 public:
 	// ctor/dtor
-	Cache( MemCac* mem , int cSize);
+	Cache( MemCac* mem , int cSize, int level);
 	~Cache();
 	// methods
 	byte READB(address a);
-	CacheLine READCL(address a)
-	{
-		CacheLine haoifjsiufh;
-		return haoifjsiufh;
-	};
+	CacheLine READCL(address a);
 	void WRITEB(address a, byte);
-	void WRITECL(address a, CacheLine& line) {};
+	void WRITECL(address a, CacheLine& line);
 	void ResetStats();
+	void ConsoleDebug();
 	// TODO: READ/WRITE functions for (aligned) 16 and 32-bit values
 	// data
 	ParkingLot* lot;
 	MemCac* memory;
-	int rHits, rMisses, totalCost, rCacheAdd, rEvict, read, write, wHits, wMisses, wCacheAdd, wEvict;
+	int rHits, rMisses, totalCost, rCacheAdd, rEvict, read, write, wHits, wMisses, wCacheAdd, wEvict, level = 0;
 	int cacheSize = 0;
 };

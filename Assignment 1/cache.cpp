@@ -60,12 +60,12 @@ void Memory::WRITECL( address a, CacheLine& line )
 // ------------------------------------------------------------------
 
 // constructor
-Cache::Cache( MemCac* mem, int cSize )
+Cache::Cache( MemCac* mem, int cSize, int l )
 {
 	cacheSize = cSize;
 	lot = new ParkingLot[cSize / SLOTSIZE / NWAYN];
 	memory = mem;
-
+	level = l;
 	totalCost = 0;
 	ResetStats();
 }
@@ -136,6 +136,66 @@ byte Cache::READB(address a)
 	return returnValue;
 }
 
+// read a single byte from memory
+// TODO: minimize calls to memory->READ using caching
+CacheLine Cache::READCL(address a)
+{
+	read++;
+	CacheLine* slot = lot[(a&SLOTMASK) >> 6].cacheLine;
+
+	// -----------------------------------
+	// Search for the address in the cache
+	// -----------------------------------
+
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (slot[i].IsValid())
+			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
+			{
+				rHits++;
+				totalCost += L1ACCESSCOST;
+				return slot[i];
+			}
+	}
+
+	rMisses++;
+	// update memory access cost
+	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
+								// request a full line from memory
+	CacheLine line = memory->READCL(a & ADDRESSMASK);
+	// return the requested byte
+	byte returnValue = line.value[a & OFFSETMASK];
+
+	// -----------------------------------------------------
+	// Try to find an invalid slot in the cache to overwrite
+	// -----------------------------------------------------
+
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (!slot[i].IsValid())
+		{
+			slot[i] = line;
+			slot[i].tag = (a & ADDRESSMASK) | VALID;
+			rCacheAdd++;
+			return line;
+		}
+	}
+
+	// --------------------------------------
+	// Evict a slot to make room for new data
+	// --------------------------------------
+
+	int randomNumber = rand() % (NWAYN);
+
+	if (slot[randomNumber].IsDirty())
+		memory->WRITECL(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
+
+	slot[randomNumber] = line;
+	slot[randomNumber].tag = (a & ADDRESSMASK) | VALID;
+	rEvict++;
+	return line;
+}
+
 // write a single byte to memory
 // TODO: minimize calls to memory->WRITE using caching
 void Cache::WRITEB( address a, byte value )
@@ -198,7 +258,79 @@ void Cache::WRITEB( address a, byte value )
 	return;
 }
 
+
+// write a single byte to memory
+// TODO: minimize calls to memory->WRITE using caching
+void Cache::WRITECL(address a, CacheLine& line)
+{
+	write++;
+	CacheLine* slot = lot[(a&SLOTMASK) >> 6].cacheLine;
+
+	// -----------------------------------
+	// Search for the address in the cache
+	// -----------------------------------
+
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (slot[i].IsValid())
+			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
+			{
+				slot[i] = line;
+				slot[i].tag |= DIRTY;
+				wHits++;
+				totalCost += L1ACCESSCOST;
+				return;
+			}
+	}
+
+	// -----------------------------------------------------
+	// Try to find an invalid slot in the cache to overwrite
+	// -----------------------------------------------------
+
+	wMisses++;
+	totalCost += RAMACCESSCOST;
+
+	//CacheLine line = memory->READCL(a & ADDRESSMASK);
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (!slot[i].IsValid())
+		{
+			// change the byte at the correct offset
+			/*line.value[a & OFFSETMASK] = value;
+			line.tag = (a & ADDRESSMASK) | VALID | DIRTY;*/
+			slot[i] = line;
+			wCacheAdd++;
+			return;
+		}
+	}
+
+	// --------------------------------------
+	// Evict a slot to make room for new data
+	// --------------------------------------
+
+	int randomNumber = rand() % (NWAYN);
+
+	if (slot[randomNumber].IsDirty())
+		memory->WRITECL(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
+
+	// change the byte at the correct offset
+	/*line.value[a & OFFSETMASK] = value;
+	line.tag = (a & ADDRESSMASK) | VALID | DIRTY;*/
+	slot[randomNumber] = line;
+	wEvict++;
+	return;
+}
+
+
 void Cache::ResetStats()
 {
 	rHits = rMisses = rCacheAdd = rEvict = read = write = wEvict = wCacheAdd = wHits = wMisses = 0;
+}
+
+void Cache::ConsoleDebug()
+{
+	printf("L%i\n", level);
+	printf("Read %i, hits:misses %i:%i, evictions / cacheAdds %i / %i\n", read, rHits, rMisses, rEvict, rCacheAdd);
+	printf("Write %i, hits:misses %i:%i, evictions / cacheAdds %i / %i\n", write, wHits, wMisses, wEvict, wCacheAdd);
+	printf("--------------------------------------------------------------------\n");
 }

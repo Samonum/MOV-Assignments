@@ -7,9 +7,9 @@ void Game::Init()
 {
 	// instantiate simulated memory and cache
 	memory = new Memory( 1024 * 1024 ); // allocate 1MB
-	cacheL3 = new Cache(memory, L3CACHESIZE);
-	cacheL2 = new Cache(cacheL3, L2CACHESIZE);
-	cacheL1 = new Cache(cacheL2, L1CACHESIZE);
+	cacheL3 = new Cache(memory, L3CACHESIZE, 3);
+	cacheL2 = new Cache(cacheL3, L2CACHESIZE, 2);
+	cacheL1 = new Cache(cacheL2, L1CACHESIZE, 1);
 	// intialize fractal algorithm
 	srand( 1000 );
 	Set( 0, 0, IRand( 255 ) );
@@ -72,9 +72,12 @@ void Game::Tick( float dt )
 		Subdivide( x1, y1, x2, y2, task[taskPtr].scale );
 	}
 	// report on memory access cost (134M before your improvements :) )
+	printf("--------------------------------------------------------------------\n");
 	printf( "total memory access cost: %iM cycles\n", cacheL1->totalCost / 1000000 );
-	printf("Read %i, hits:misses %i:%i, evictions / cacheAdds %i / %i\n", cacheL1->read, cacheL1->rHits, cacheL1->rMisses, cacheL1->rEvict, cacheL1->rCacheAdd);
-	printf("Write %i, hits:misses %i:%i, evictions / cacheAdds %i / %i\n", cacheL1->write, cacheL1->wHits, cacheL1->wMisses, cacheL1->wEvict, cacheL1->wCacheAdd);
+	printf("--------------------------------------------------------------------\n");
+	cacheL1->ConsoleDebug();
+	cacheL2->ConsoleDebug();
+	cacheL3->ConsoleDebug();
 	cacheL1->ResetStats();
 	// visualize current state
 	// artificial RAM access delay and cost counting are disabled here

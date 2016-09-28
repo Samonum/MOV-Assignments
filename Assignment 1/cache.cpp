@@ -108,17 +108,29 @@ CacheLine Cache::READCL(address a, bool isWrite)
 			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
 			{
 				if (!isWrite)
+				{
 					rHits++;
+					rtotalHits++;
+				}
 				else
+				{
 					wHits++;
+					wtotalHits++;
+				}
 				totalCost += L1ACCESSCOST;
 				return slot[i];
 			}
 	}
 	if (!isWrite)
+	{
 		rMisses++;
+		rtotalMisses++;
+	}
 	else
+	{
 		wMisses++;
+		wtotalMisses++;
+	}
 	// update memory access cost
 	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
 								// request a full line from memory
@@ -210,7 +222,7 @@ void Cache::ResetStats()
 
 void Cache::ConsoleDebug()
 {
-	printf("L%i\n", level);
+	printf("L%i  Read H/L:%i/%i Total Write H/L:%i/%i\n", level, rtotalHits, rtotalMisses, wtotalHits, wtotalMisses);
 	printf("Read %i, hits:misses %i:%i, evictions / cacheAdds %i / %i\n", read, rHits, rMisses, rEvict, rCacheAdd);
 	printf("Write %i, hits:misses %i:%i, evictions / cacheAdds %i / %i\n", write, wHits, wMisses, wEvict, wCacheAdd);
 	printf("--------------------------------------------------------------------\n");

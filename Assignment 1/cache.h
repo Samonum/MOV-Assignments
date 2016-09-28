@@ -86,5 +86,6 @@ public:
 	ParkingLot* lot;
 	MemCac* memory;
 	int rHits, rMisses, totalCost, rCacheAdd, rEvict, read, write, wHits, wMisses, wCacheAdd, wEvict, level = 0;
+	int rtotalHits = 0, rtotalMisses = 0, wtotalHits = 0, wtotalMisses = 0;
 	int slotMask;
 };

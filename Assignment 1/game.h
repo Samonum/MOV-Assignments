@@ -1,7 +1,14 @@
 #pragma once
 
 #define SCRWIDTH	 800
-#define SCRHEIGHT	 640
+#define SCRHEIGHT	 800
+#define L1CACHECOLOR 0x33FF33
+#define L2CACHECOLOR 0x337733
+#define L3CACHECOLOR 0xFFFF33
+#define RAMCOLOR     0xFF3333
+#define DARKNESS     0x000000
+#define HIBLU        0x00EEEE
+#define LOBLU        0x009999
 
 namespace Tmpl8 {
 
@@ -28,6 +35,7 @@ public:
 	}
 	void Subdivide( int x1, int y1, int x2, int y2, int scale );
 	void Tick( float dt );
+	void DrawGraph();
 	void MouseUp( int _Button ) { /* implement if you want to detect mouse button presses */ }
 	void MouseDown( int _Button ) { /* implement if you want to detect mouse button presses */ }
 	void MouseMove( int _X, int _Y ) { /* implement if you want to detect mouse movement */ }
@@ -40,6 +48,9 @@ private:
 	Cache* cacheL2;
 	Cache* cacheL3;
 	Task task[512];
+	int performanceGraph[SCRWIDTH / 4][3];
+	int totalWorkGraph[SCRWIDTH / 4];
+	int graphPointer = 0;
 	int taskPtr, c;
 };
 

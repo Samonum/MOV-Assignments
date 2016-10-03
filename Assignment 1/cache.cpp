@@ -123,7 +123,7 @@ CacheLine Cache::READCL(address a, bool isWrite)
 				totalCost += L1ACCESSCOST;
 #if EVICTION == 2
 				slot[i].tag |= LRUMARKER;
-#elif EVICTION == 3
+#elif EVICTION == 3 || EVICTION == 4
 				UpdateLRUTree(lot[(a&slotMask) >> 6], i);
 #endif
 				return slot[i];
@@ -268,9 +268,10 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 void Cache::UpdateLRUTree(ParkingLot &lot, int i)
 {
 	int node = NWAYN / 2;
-	for (int step = NWAYN / 4; step > 0; step /= 2)
+	for (int step = NWAYN / 2; step > 0;)
 	{
-		if (i < node) 
+		step /= 2;
+		if (i < node)
 		{
 			lot.evictionData &= ~(1 << node);
 			node -= step;
@@ -281,7 +282,7 @@ void Cache::UpdateLRUTree(ParkingLot &lot, int i)
 			node += step;
 		}
 	}
-	
+
 }
 
 int Cache::TreeFindLRU(ParkingLot &lot)
@@ -290,9 +291,9 @@ int Cache::TreeFindLRU(ParkingLot &lot)
 	for (int step = NWAYN / 2; step > 0; )
 	{
 		step /= 2;
-		if ((lot.evictionData >> node) &1)
+		if ((lot.evictionData >> node) & 1)
 		{
-			lot.evictionData &=~( 1 << node);
+			lot.evictionData &= ~(1 << node);
 			node -= step;
 		}
 		else
@@ -303,7 +304,102 @@ int Cache::TreeFindLRU(ParkingLot &lot)
 	}
 	cout << ((lot.evictionData >> node) & 1);
 	//TODO: think about whether or not the 1- should be there.
-	return node - (1-((lot.evictionData >> node) & 1));
+	return node - (1 - ((lot.evictionData >> node) & 1));
+}
+
+CacheLine Cache::ReadMiss(address a, bool isWrite)
+{
+	ParkingLot dbg = ParkingLot();
+	dbg.evictionData = 0b00010000;
+	int fewr = TreeFindLRU(dbg);
+
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
+	CacheLine line = memory->READCL(a, isWrite);
+	// --------------------------------------
+	// Evict a slot to make room for new data
+	// --------------------------------------
+	int target = TreeFindLRU(lot[(a&slotMask) >> 6]);
+	if (slot[target].IsDirty())
+		memory->WRITECL(slot[target].tag & ADDRESSMASK, slot[target]);
+
+	slot[target] = line;
+	slot[target].tag = a | VALID;
+	if (!isWrite)
+		rEvict++;
+	else
+		wEvict++;
+	return line;
+}
+
+#elif EVICTION == 4
+
+void Cache::UpdateLRUTree(ParkingLot &lot, int i)
+{
+	int node = NWAYN / 2;
+	int hist = lot.evictionData >> 16;
+	for (int step = NWAYN / 2; step > 0;)
+	{
+		step /= 2;
+		if (i < node)
+		{
+			if (step != 0)
+			{
+				lot.evictionData ^= (-((hist >> node) & 1) ^ lot.evictionData) & (1 << node);
+				hist &= ~(1 << node);
+				node -= step;
+			}
+			else 
+				lot.evictionData &= ~(1 << node);
+		}
+		else
+		{
+			if (step != 0)
+			{
+				lot.evictionData ^= (-((hist >> node) & 1) ^ lot.evictionData) & (1 << node);
+				hist |= 1 << node;
+				node += step;
+			}
+			else
+				lot.evictionData |= 1 << node;
+		}
+		lot.evictionData = (lot.evictionData & ((1 << 16) - 1)) + (hist << 16);
+	}
+
+}
+
+int Cache::TreeFindLRU(ParkingLot &lot)
+{
+	int hist = lot.evictionData >> 16;
+	int node = NWAYN / 2;
+	for (int step = NWAYN / 2; step > 0; )
+	{
+		step /= 2;
+		if ((lot.evictionData >> node) & 1)
+		{
+			if (step != 0)
+			{
+				lot.evictionData ^= (-((hist >> node) & 1) ^ lot.evictionData) & (1 << node);
+				hist &= ~(1 << node);
+				node -= step;
+			}
+			else
+				lot.evictionData &= ~(1 << node);
+		}
+		else
+		{
+			if (step != 0)
+			{
+				lot.evictionData ^= (-((hist >> node) & 1) ^ lot.evictionData) & (1 << node);
+				hist |= 1 << node;
+				node += step;
+			}
+			else
+				lot.evictionData |= 1 << node;
+		}
+	}
+	lot.evictionData = (lot.evictionData & ((1 << 16) - 1)) + (hist << 16);
+	//TODO: think about whether or not the 1- should be there.
+	return node - (1 - ((lot.evictionData >> node) & 1));
 }
 
 CacheLine Cache::ReadMiss(address a, bool isWrite)

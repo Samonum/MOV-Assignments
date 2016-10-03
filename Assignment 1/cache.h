@@ -1,8 +1,8 @@
 #pragma once
 
-#define L1CACHESIZE		8192					// total L1$ size, in bytes
-#define L2CACHESIZE		16384					// total L2$ size, in bytes
-#define L3CACHESIZE		65536					// total L3$ size, in bytes
+#define L1CACHESIZE		8192		/4			// total L1$ size, in bytes
+#define L2CACHESIZE		16384		/4			// total L2$ size, in bytes
+#define L3CACHESIZE		65536		/4			// total L3$ size, in bytes
 #define SLOTSIZE		64						// cache slot size, in bytes
 #define ADDRESSMASK		(0x1000000 - SLOTSIZE)	// used for masking out lowest log2(SLOTSIZE) bits
 #define OFFSETMASK		(SLOTSIZE - 1)			// used for masking out bits above log2(SLOTSIZE)
@@ -14,7 +14,7 @@
 #define DIRTY           0b10
 #define NWAYN			8
 
-#define EVICTION		3						// 0 = random, 1 = FIFO, 2 = Bit-PLRU, 3 = Tree-PLRU
+#define EVICTION		4						// 0 = random, 1 = FIFO, 2 = Bit-PLRU, 3 = Tree-PLRU, 4 = Modified-Tree-PLRU
 #define LRUMARKER		0b100
 typedef unsigned int address;
 

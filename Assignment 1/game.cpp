@@ -141,6 +141,9 @@ void Game::DrawGraph()
 	performanceGraph[graphPointer][2] = y3;
 
 	float percent = (float)total / 10000.0f;
+	if (percent > 1)
+		percent = 1;
+
 	totalWorkGraph[graphPointer] = SCRHEIGHT - graphHeight * percent;
 
 	for (int y = 580; y < SCRHEIGHT; y++)

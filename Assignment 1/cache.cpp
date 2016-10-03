@@ -125,6 +125,15 @@ CacheLine Cache::READCL(address a, bool isWrite)
 				slot[i].tag |= LRUMARKER;
 #elif EVICTION == 3 || EVICTION == 4
 				UpdateLRUTree(lot[(a&slotMask) >> 6], i);
+#elif EVICTION == 5
+
+				int curValue = (slot[i].tag & LRUMASK);
+				for (int j = 0; j < NWAYN; j++)
+					if ((slot[j].tag & LRUMASK) < curValue)
+						slot[j].tag += (1 << 2);
+
+				slot[i].tag &= ~LRUMASK;
+				slot[i].tag |= VALID;
 #endif
 				return slot[i];
 			}
@@ -434,6 +443,49 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 	return line;
 }
 
+#elif EVICTION == 5
+CacheLine Cache::ReadMiss(address a, bool isWrite)
+{
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
+	CacheLine line = memory->READCL(a, isWrite);
+	// return the requested byte
+
+	// --------------------------------------
+	// Evict a slot to make room for new data
+	// --------------------------------------
+
+	int bigSlot = -1;
+	int bigValue = 0;
+
+	for (int i = 0; i < NWAYN; i++)
+	{
+		int thisValue = (slot[i].tag & LRUMASK);
+		if (thisValue >= bigValue)
+		{
+			bigSlot = i;
+			bigValue = thisValue;
+		}
+	}
+
+	_ASSERT(bigSlot != -1);
+
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (i == bigSlot)
+			continue;
+		slot[i].tag += (1 << 2);
+	}
+
+	slot[bigSlot] = line;
+	slot[bigSlot].tag &= ~LRUMASK;
+	slot[bigSlot].tag |= VALID;
+
+	if (!isWrite)
+		rEvict++;
+	else
+		wEvict++;
+	return line;
+}
 #endif
 
 // write a single byte to memory

@@ -14,7 +14,7 @@
 #define DIRTY           0b10
 #define NWAYN			8
 
-#define EVICTION		4						// 0 = random, 1 = FIFO, 2 = Bit-PLRU, 3 = Tree-PLRU, 4 = Modified-Tree-PLRU
+#define EVICTION		3						// 0 = random, 1 = FIFO, 2 = Bit-PLRU, 3 = Tree-PLRU, 4 = Modified-Tree-PLRU
 #define LRUMARKER		0b100
 typedef unsigned int address;
 
@@ -46,14 +46,8 @@ inline bool CacheLine::IsDirty()
 class MemCac
 {
 public:
-	virtual byte READB(address a) = 0;
 	virtual CacheLine READCL(address a, bool wrrite = false) = 0;
-	virtual void WRITEB(address a, byte) = 0;
 	virtual void WRITECL(address a, CacheLine& line) = 0;
-	virtual byte READB16(address a) = 0;
-	virtual CacheLine READCL16(address a, bool wrrite = false) = 0;
-	virtual void WRITEB16(address a, byte) = 0;
-	virtual void WRITECL16(address a, CacheLine& line) = 0;
 };
 
 class Memory: public MemCac
@@ -62,17 +56,9 @@ public:
 	// ctor/dtor
 	Memory( uint size );
 	~Memory();
-	byte READB(address a) { return 0; };
 	CacheLine READCL(address a, bool write = false);
-	void WRITEB(address a, byte) {};
 	void WRITECL(address a, CacheLine& line);
 
-	byte READB16(address a) { return 0; };
-	CacheLine READCL16(address a, bool wrrite = false);
-	void WRITEB16(address a, byte) {};
-	void WRITECL16(address a, CacheLine& line);
-
-	void ConsoleWrite();
 	// data members
 	CacheLine* data;
 	int* tag;
@@ -95,10 +81,10 @@ public:
 	void WRITEB(address a, byte);
 	void WRITECL(address a, CacheLine& line);
 
-	byte READB16(address a);
-	CacheLine READCL16(address a, bool wrrite = false);
-	void WRITEB16(address a, byte);
-	void WRITECL16(address a, CacheLine& line);
+	short READB16(address a);
+	int READB32(address a);
+	void WRITEB16(address a, short v);
+	void WRITEB32(address a, int v);
 
 	void ResetStats();
 	void ConsoleDebug();

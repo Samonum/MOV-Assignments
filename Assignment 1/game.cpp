@@ -19,7 +19,7 @@ void Game::Init()
 	Set( 512, 0, IRand( 255 ) );
 	Set( 0, 512, IRand( 255 ) );
 	Set( 512, 512, IRand( 255 ) );
-
+	
 	// put first subdivision task on stack
 	taskPtr = 0;
 	Push( 0, 0, 512, 512, 256 );

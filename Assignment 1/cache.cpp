@@ -335,20 +335,28 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 
 void Cache::UpdateLRUTree(ParkingLot &lot, int i)
 {
+	//Start at cetral node
 	int node = NWAYN / 2;
+	//Extract the history
 	int hist = lot.evictionData >> 16;
 	for (int step = NWAYN / 2; step > 0;)
 	{
+		//Update step size
 		step /= 2;
+		//Decide whether to move left or right
 		if (i < node)
 		{
+			//If we're not at the bottom (non-leave) nodes
 			if (step != 0)
 			{
+				//Set eviction data to the node history
 				lot.evictionData ^= (-((hist >> node) & 1) ^ lot.evictionData) & (1 << node);
+				//Update history
 				hist &= ~(1 << node);
 				node -= step;
 			}
-			else 
+			else
+				//Otherwise: Update node directly
 				lot.evictionData &= ~(1 << node);
 		}
 		else

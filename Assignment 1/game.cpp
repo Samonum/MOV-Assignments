@@ -12,12 +12,14 @@ void Game::Init()
 	cacheL3 = new Cache(memory, L3CACHESIZE, 3);
 	cacheL2 = new Cache(cacheL3, L2CACHESIZE, 2);
 	cacheL1 = new Cache(cacheL2, L1CACHESIZE, 1);
+
 	// intialize fractal algorithm
 	srand( 1000 );
 	Set( 0, 0, IRand( 255 ) );
 	Set( 512, 0, IRand( 255 ) );
 	Set( 0, 512, IRand( 255 ) );
 	Set( 512, 512, IRand( 255 ) );
+
 	// put first subdivision task on stack
 	taskPtr = 0;
 	Push( 0, 0, 512, 512, 256 );
@@ -81,8 +83,10 @@ void Game::Tick( float dt )
 			pause = true;
 			break;
 		}
+
 		int x1 = task[--taskPtr].x1, x2 = task[taskPtr].x2;
 		int y1 = task[taskPtr].y1, y2 = task[taskPtr].y2;
+
 		Subdivide( x1, y1, x2, y2, task[taskPtr].scale );
 	}
 
@@ -178,4 +182,6 @@ void Game::Shutdown()
 {
 	delete memory;
 	delete cacheL1;
+	delete cacheL2;
+	delete cacheL3;
 }

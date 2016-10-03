@@ -92,7 +92,7 @@ void Game::Tick( float dt )
 
 	// report on memory access cost (134M before your improvements :) )
 	printf("--------------------------------------------------------------------\n");
-	printf( "total memory access cost: %iM cycles\n", cacheL1->totalCost / 1000000 );
+	printf( "total memory access cost: %iK cycles\n", ((cacheL1->rtotalHits + cacheL1->wtotalHits) * L1ACCESSCOST + (cacheL2->rtotalHits + cacheL2->wtotalHits) * L2ACCESSCOST + (cacheL3->rtotalHits + cacheL3->wtotalHits) * L3ACCESSCOST + (cacheL3->rtotalMisses + cacheL3->wtotalMisses) * RAMACCESSCOST)/ 1000 );
 	printf("--------------------------------------------------------------------\n");
 
 	cacheL1->ConsoleDebug();

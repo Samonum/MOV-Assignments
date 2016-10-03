@@ -11,6 +11,7 @@
     <ClCompile Include="template.cpp">
       <Filter>template</Filter>
     </ClCompile>
+    <ClCompile Include="cache.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game.h" />
@@ -23,6 +24,7 @@
     <ClInclude Include="surface.h">
       <Filter>template</Filter>
     </ClInclude>
+    <ClInclude Include="cache.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="_readme.txt" />

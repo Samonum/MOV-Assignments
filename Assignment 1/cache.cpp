@@ -85,13 +85,16 @@ Cache::~Cache()
 // TODO: minimize calls to memory->READ using caching
 byte Cache::READB(address a)
 {
-	return READCL(a).value[a & OFFSETMASK];
+	return READCL(a & ADDRESSMASK).value[a & OFFSETMASK];
 }
+
+
 
 // read a single byte from memory
 // TODO: minimize calls to memory->READ using caching
 CacheLine Cache::READCL(address a, bool isWrite)
 {
+	_ASSERT((a & OFFSETMASK) == 0);
 	if (!isWrite)
 		read++;
 	else
@@ -105,7 +108,7 @@ CacheLine Cache::READCL(address a, bool isWrite)
 	for (int i = 0; i < NWAYN; i++)
 	{
 		if (slot[i].IsValid())
-			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
+			if (a == (slot[i].tag & ADDRESSMASK))
 			{
 				if (!isWrite)
 				{
@@ -118,9 +121,15 @@ CacheLine Cache::READCL(address a, bool isWrite)
 					wtotalHits++;
 				}
 				totalCost += L1ACCESSCOST;
+#if EVICTION == 2
+				slot[i].tag |= LRUMARKER;
+#elif EVICTION == 3 || EVICTION == 4
+				UpdateLRUTree(lot[(a&slotMask) >> 6], i);
+#endif
 				return slot[i];
 			}
 	}
+
 	if (!isWrite)
 	{
 		rMisses++;
@@ -134,9 +143,15 @@ CacheLine Cache::READCL(address a, bool isWrite)
 	// update memory access cost
 	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
 								// request a full line from memory
-	CacheLine line = memory->READCL(a & ADDRESSMASK, isWrite);
+	return ReadMiss(a, isWrite);
+}
+
+#if EVICTION == 0
+CacheLine Cache::ReadMiss(address a, bool isWrite)
+{
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
+	CacheLine line = memory->READCL(a, isWrite);
 	// return the requested byte
-	byte returnValue = line.value[a & OFFSETMASK];
 
 	// -----------------------------------------------------
 	// Try to find an invalid slot in the cache to overwrite
@@ -147,7 +162,7 @@ CacheLine Cache::READCL(address a, bool isWrite)
 		if (!slot[i].IsValid())
 		{
 			slot[i] = line;
-			slot[i].tag = (a & ADDRESSMASK) | VALID;
+			slot[i].tag = (a) | VALID;
 			if (!write)
 				rCacheAdd++;
 			else
@@ -166,7 +181,7 @@ CacheLine Cache::READCL(address a, bool isWrite)
 		memory->WRITECL(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
 
 	slot[randomNumber] = line;
-	slot[randomNumber].tag = (a & ADDRESSMASK) | VALID;
+	slot[randomNumber].tag = a | VALID;
 	if (!isWrite)
 		rEvict++;
 	else
@@ -174,11 +189,250 @@ CacheLine Cache::READCL(address a, bool isWrite)
 	return line;
 }
 
+
+#elif EVICTION == 1
+CacheLine Cache::ReadMiss(address a, bool isWrite)
+{
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
+	CacheLine line = memory->READCL(a, isWrite);
+
+	// --------------------------------------
+	// Evict a slot to make room for new data
+	// --------------------------------------
+
+	if (slot[lot->evictionData].IsDirty())
+		memory->WRITECL(slot[lot->evictionData].tag & ADDRESSMASK, slot[lot->evictionData]);
+
+	slot[lot->evictionData] = line;
+	slot[lot->evictionData].tag = a | VALID;
+	lot->evictionData = ++lot->evictionData & (NWAYN - 1);
+	if (!isWrite)
+		rEvict++;
+	else
+		wEvict++;
+	return line;
+}
+
+
+#elif EVICTION == 2
+CacheLine Cache::ReadMiss(address a, bool isWrite)
+{
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
+	CacheLine line = memory->READCL(a, isWrite);
+
+	// -----------------------------------------------------
+	// Try to find an invalid slot in the cache to overwrite
+	// -----------------------------------------------------
+
+	int target = -1;
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (!slot[i].IsValid())
+		{
+			slot[i] = line;
+			slot[i].tag = a | VALID | LRUMARKER;
+			if (!write)
+				rCacheAdd++;
+			else
+				wCacheAdd++;
+			return line;
+		}
+		if (!(slot[i].tag & LRUMARKER))
+			target = i;
+	}
+	// --------------------------------------
+	// Evict a slot to make room for new data
+	// --------------------------------------
+	if (target == -1)
+	{
+		for (int i = 0; i < NWAYN; i++)
+			slot[i].tag &= ~LRUMARKER;
+		target = 0;
+	}
+
+	if (slot[target].IsDirty())
+		memory->WRITECL(slot[target].tag & ADDRESSMASK, slot[target]);
+
+	slot[target] = line;
+	slot[target].tag = a | VALID | LRUMARKER;
+	if (!isWrite)
+		rEvict++;
+	else
+		wEvict++;
+	return line;
+}
+
+
+#elif EVICTION == 3
+
+void Cache::UpdateLRUTree(ParkingLot &lot, int i)
+{
+	int node = NWAYN / 2;
+	for (int step = NWAYN / 2; step > 0;)
+	{
+		step /= 2;
+		if (i < node)
+		{
+			lot.evictionData &= ~(1 << node);
+			node -= step;
+		}
+		else
+		{
+			lot.evictionData |= 1 << node;
+			node += step;
+		}
+	}
+
+}
+
+int Cache::TreeFindLRU(ParkingLot &lot)
+{
+	int node = NWAYN / 2;
+	for (int step = NWAYN / 2; step > 0; )
+	{
+		step /= 2;
+		if ((lot.evictionData >> node) & 1)
+		{
+			lot.evictionData &= ~(1 << node);
+			node -= step;
+		}
+		else
+		{
+			lot.evictionData |= 1 << node;
+			node += step;
+		}
+	}
+	cout << ((lot.evictionData >> node) & 1);
+	//TODO: think about whether or not the 1- should be there.
+	return node - (1 - ((lot.evictionData >> node) & 1));
+}
+
+CacheLine Cache::ReadMiss(address a, bool isWrite)
+{
+	ParkingLot dbg = ParkingLot();
+	dbg.evictionData = 0b00010000;
+	int fewr = TreeFindLRU(dbg);
+
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
+	CacheLine line = memory->READCL(a, isWrite);
+	// --------------------------------------
+	// Evict a slot to make room for new data
+	// --------------------------------------
+	int target = TreeFindLRU(lot[(a&slotMask) >> 6]);
+	if (slot[target].IsDirty())
+		memory->WRITECL(slot[target].tag & ADDRESSMASK, slot[target]);
+
+	slot[target] = line;
+	slot[target].tag = a | VALID;
+	if (!isWrite)
+		rEvict++;
+	else
+		wEvict++;
+	return line;
+}
+
+#elif EVICTION == 4
+
+void Cache::UpdateLRUTree(ParkingLot &lot, int i)
+{
+	int node = NWAYN / 2;
+	int hist = lot.evictionData >> 16;
+	for (int step = NWAYN / 2; step > 0;)
+	{
+		step /= 2;
+		if (i < node)
+		{
+			if (step != 0)
+			{
+				lot.evictionData ^= (-((hist >> node) & 1) ^ lot.evictionData) & (1 << node);
+				hist &= ~(1 << node);
+				node -= step;
+			}
+			else 
+				lot.evictionData &= ~(1 << node);
+		}
+		else
+		{
+			if (step != 0)
+			{
+				lot.evictionData ^= (-((hist >> node) & 1) ^ lot.evictionData) & (1 << node);
+				hist |= 1 << node;
+				node += step;
+			}
+			else
+				lot.evictionData |= 1 << node;
+		}
+		lot.evictionData = (lot.evictionData & ((1 << 16) - 1)) + (hist << 16);
+	}
+
+}
+
+int Cache::TreeFindLRU(ParkingLot &lot)
+{
+	int hist = lot.evictionData >> 16;
+	int node = NWAYN / 2;
+	for (int step = NWAYN / 2; step > 0; )
+	{
+		step /= 2;
+		if ((lot.evictionData >> node) & 1)
+		{
+			if (step != 0)
+			{
+				lot.evictionData ^= (-((hist >> node) & 1) ^ lot.evictionData) & (1 << node);
+				hist &= ~(1 << node);
+				node -= step;
+			}
+			else
+				lot.evictionData &= ~(1 << node);
+		}
+		else
+		{
+			if (step != 0)
+			{
+				lot.evictionData ^= (-((hist >> node) & 1) ^ lot.evictionData) & (1 << node);
+				hist |= 1 << node;
+				node += step;
+			}
+			else
+				lot.evictionData |= 1 << node;
+		}
+	}
+	lot.evictionData = (lot.evictionData & ((1 << 16) - 1)) + (hist << 16);
+	//TODO: think about whether or not the 1- should be there.
+	return node - (1 - ((lot.evictionData >> node) & 1));
+}
+
+CacheLine Cache::ReadMiss(address a, bool isWrite)
+{
+	ParkingLot dbg = ParkingLot();
+	dbg.evictionData = 0b00010000;
+	int fewr = TreeFindLRU(dbg);
+
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
+	CacheLine line = memory->READCL(a, isWrite);
+	// --------------------------------------
+	// Evict a slot to make room for new data
+	// --------------------------------------
+	int target = TreeFindLRU(lot[(a&slotMask) >> 6]);
+	if (slot[target].IsDirty())
+		memory->WRITECL(slot[target].tag & ADDRESSMASK, slot[target]);
+
+	slot[target] = line;
+	slot[target].tag = a | VALID;
+	if (!isWrite)
+		rEvict++;
+	else
+		wEvict++;
+	return line;
+}
+
+#endif
+
 // write a single byte to memory
 // TODO: minimize calls to memory->WRITE using caching
 void Cache::WRITEB( address a, byte value )
 {
-	CacheLine cl = READCL(a, true);
+	CacheLine cl = READCL(a & ADDRESSMASK, true);
 	cl.value[a&OFFSETMASK] = value;
 	cl.tag |= DIRTY | VALID;
 
@@ -200,7 +454,7 @@ void Cache::WRITEB( address a, byte value )
 // TODO: minimize calls to memory->WRITE using caching
 void Cache::WRITECL(address a, CacheLine& line)
 {
-	CacheLine cl = READCL(a, true);
+	CacheLine cl = READCL(a & ADDRESSMASK, true);
 	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
 	for (int i = 0; i < NWAYN; i++)
 	{

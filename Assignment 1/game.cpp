@@ -141,7 +141,7 @@ void Game::DrawGraph()
 		}
 			
 	}
-	for (int y = 540; y < SCRHEIGHT; y++)
+	for (int y = 580; y < SCRHEIGHT; y++)
 		screen->Plot(graphPointer * 4, y, DARKNESS);
 
 	if (graphPointer < SCRWIDTH / 4 - 1)

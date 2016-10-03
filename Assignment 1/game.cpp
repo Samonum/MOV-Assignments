@@ -65,11 +65,17 @@ void Game::Subdivide( int x1, int y1, int x2, int y2, int scale )
 // -----------------------------------------------------------
 void Game::Tick( float dt )
 {
+	if (pause)
+		return;
 	// execute 128 tasks per frame
 	for( int i = 0; i < 128; i++ )
 	{
 		// execute one subdivision task
-		if (taskPtr == 0) break;
+		if (taskPtr == 0)
+		{
+			pause = true;
+			break;
+		}
 		int x1 = task[--taskPtr].x1, x2 = task[taskPtr].x2;
 		int y1 = task[taskPtr].y1, y2 = task[taskPtr].y2;
 		Subdivide( x1, y1, x2, y2, task[taskPtr].scale );
@@ -91,6 +97,11 @@ void Game::Tick( float dt )
 	
 	for (int y = 0; y < 513; y++) for (int x = 0; x < 513; x++)
 		screen->Plot(x + 140, y + 60, GREY(m[x + y * 513]));
+}
+
+void Game::KeyUp(int a_Key) 
+{ 
+	pause = !pause;
 }
 
 void Game::DrawGraph()

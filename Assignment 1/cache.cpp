@@ -43,6 +43,15 @@ void Memory::WRITECL( address a, CacheLine& line )
 	data[a / SLOTSIZE] = line;
 }
 
+CacheLine Memory::READCL16(address a, bool wrrite)
+{
+	return CacheLine();
+}
+
+void Memory::WRITECL16(address a, CacheLine & line)
+{
+}
+
 void Memory::ConsoleWrite()
 {
 
@@ -96,6 +105,7 @@ CacheLine Cache::READCL(address a, bool isWrite)
 		read++;
 	else
 		write++;
+
 	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
 
 	// -----------------------------------
@@ -121,16 +131,19 @@ CacheLine Cache::READCL(address a, bool isWrite)
 				return slot[i];
 			}
 	}
+
 	if (!isWrite)
 	{
 		rMisses++;
 		rtotalMisses++;
 	}
+
 	else
 	{
 		wMisses++;
 		wtotalMisses++;
 	}
+
 	// update memory access cost
 	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
 								// request a full line from memory
@@ -213,6 +226,24 @@ void Cache::WRITECL(address a, CacheLine& line)
 				return;
 			}
 	}
+}
+
+byte Cache::READB16(address a)
+{
+	return byte();
+}
+
+CacheLine Cache::READCL16(address a, bool wrrite)
+{
+	return CacheLine();
+}
+
+void Cache::WRITEB16(address a, byte)
+{
+}
+
+void Cache::WRITECL16(address a, CacheLine & line)
+{
 }
 
 void Cache::ResetStats()

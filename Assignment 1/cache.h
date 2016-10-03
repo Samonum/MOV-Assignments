@@ -48,6 +48,10 @@ public:
 	virtual CacheLine READCL(address a, bool wrrite = false) = 0;
 	virtual void WRITEB(address a, byte) = 0;
 	virtual void WRITECL(address a, CacheLine& line) = 0;
+	virtual byte READB16(address a) = 0;
+	virtual CacheLine READCL16(address a, bool wrrite = false) = 0;
+	virtual void WRITEB16(address a, byte) = 0;
+	virtual void WRITECL16(address a, CacheLine& line) = 0;
 };
 
 class Memory: public MemCac
@@ -60,6 +64,12 @@ public:
 	CacheLine READCL(address a, bool write = false);
 	void WRITEB(address a, byte) {};
 	void WRITECL(address a, CacheLine& line);
+
+	byte READB16(address a) { return 0; };
+	CacheLine READCL16(address a, bool wrrite = false);
+	void WRITEB16(address a, byte) {};
+	void WRITECL16(address a, CacheLine& line);
+
 	void ConsoleWrite();
 	// data members
 	CacheLine* data;
@@ -79,6 +89,12 @@ public:
 	CacheLine READCL(address a, bool write = false);
 	void WRITEB(address a, byte);
 	void WRITECL(address a, CacheLine& line);
+
+	byte READB16(address a);
+	CacheLine READCL16(address a, bool wrrite = false);
+	void WRITEB16(address a, byte);
+	void WRITECL16(address a, CacheLine& line);
+
 	void ResetStats();
 	void ConsoleDebug();
 	// TODO: READ/WRITE functions for (aligned) 16 and 32-bit values

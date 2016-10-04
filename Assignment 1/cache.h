@@ -25,6 +25,7 @@ struct CacheLine
 	byte value[SLOTSIZE];
 	bool IsValid();
 	bool IsDirty();
+	uint ltag = 0;
 };
 
 struct ParkingLot

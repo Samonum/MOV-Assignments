@@ -126,7 +126,17 @@ CacheLine Cache::READCL(address a, bool isWrite)
 #elif EVICTION == 3 || EVICTION == 4
 				UpdateLRUTree(lot[(a&slotMask) >> 6], i);
 #elif EVICTION == 5
+				
+				slot[i].ltag = 0;
+				slot[i].tag |= VALID;
 
+				for (int j = 0; j < NWAYN; j++)
+				{
+					if (j == i)
+						continue;
+					slot[j].ltag++;
+				}
+				/*
 				int curValue = (slot[i].tag & LRUMASK);
 				for (int j = 0; j < NWAYN; j++)
 					if ((slot[j].tag & LRUMASK) < curValue)
@@ -134,6 +144,7 @@ CacheLine Cache::READCL(address a, bool isWrite)
 
 				slot[i].tag &= ~LRUMASK;
 				slot[i].tag |= VALID;
+				*/
 #endif
 				return slot[i];
 			}
@@ -453,7 +464,65 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 	// --------------------------------------
 	// Evict a slot to make room for new data
 	// --------------------------------------
+	
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (!slot[i].IsValid())
+		{
+			slot[i] = line;
+			slot[i].tag = (a & ADDRESSMASK) | VALID;
+			slot[i].ltag = 0;
 
+			for (int j = 0; j < NWAYN; j++)
+			{
+				if (j == i)
+					continue;
+				slot[j].ltag++;
+			}
+			rCacheAdd++;
+			return line;
+		}
+	}
+
+	// --------------------------------------
+	// Evict a slot to make room for new data
+	// --------------------------------------
+
+	int maxTag = 0;
+	int maxIndex = -1;
+
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (slot[i].ltag > maxTag)
+		{
+			maxTag = slot[i].ltag;
+			maxIndex = i;
+		}
+	}
+
+	if (slot[maxIndex].IsDirty())
+		memory->WRITECL(slot[maxIndex].tag & ADDRESSMASK, slot[maxIndex]);
+	/*
+	//DIRTYCHECKING
+	int randomNumber = rand() % (NWAYN);
+
+	if (slot[randomNumber].IsDirty())
+		memory->WRITE(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
+		*/
+	slot[maxIndex] = line;
+	slot[maxIndex].tag = (a & ADDRESSMASK) | VALID;
+	slot[maxIndex].ltag = 0;
+
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (i == maxIndex)
+			continue;
+		slot[i].ltag++;
+	}
+	rEvict++;
+	return line;
+	
+	/*
 	int bigSlot = -1;
 	int bigValue = 0;
 
@@ -476,6 +545,9 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 		slot[i].tag += (1 << 2);
 	}
 
+	if (slot[bigSlot].IsDirty())
+		memory->WRITECL(slot[bigSlot].tag & ADDRESSMASK, slot[bigSlot]);
+
 	slot[bigSlot] = line;
 	slot[bigSlot].tag &= ~LRUMASK;
 	slot[bigSlot].tag |= VALID;
@@ -484,7 +556,7 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 		rEvict++;
 	else
 		wEvict++;
-	return line;
+	return line;*/
 }
 #endif
 

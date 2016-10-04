@@ -14,9 +14,8 @@
 #define DIRTY           0b10
 #define NWAYN			8
 
-#define EVICTION		0						// 0 = random, 1 = FIFO, 2 = Bit-PLRU, 3 = Tree-PLRU, 4 = Modified-Tree-PLRU, 5 = LRU
-#define LRUMARKER		0b100
-#define LRUMASK			0b111100
+#define EVICTION		3						// 0 = random, 1 = FIFO, 2 = Bit-PLRU, 3 = Tree-PLRU, 4 = Modified-Tree-PLRU, 5 = LRU
+#define LRUMARKER		0b100					// Mask for the marker bit for the Bit-PLRU
 typedef unsigned int address;
 
 struct CacheLine

@@ -76,17 +76,19 @@ Cache::~Cache()
 }
 
 // read a single byte from memory
-// TODO: minimize calls to memory->READ using caching
 byte Cache::READB(address a)
 {
 	return READCL(a & ADDRESSMASK).value[a & OFFSETMASK];
 }
 
+//Returns a 16-bit integer. Crashes when asked for values split over multiple cachelines
 short Cache::READB16(address a)
 {
 	CacheLine line = READCL(a & ADDRESSMASK);
 	return (line.value[a & OFFSETMASK] <<8) | line.value[(a&OFFSETMASK) + 1];
 }
+
+//Returns a 32-bit integer. Crashes when asked for values split over multiple cachelines
 int Cache::READB32(address a)
 {
 	CacheLine line = READCL(a & ADDRESSMASK);
@@ -95,7 +97,6 @@ int Cache::READB32(address a)
 }
 
 // write a single byte to memory
-// TODO: minimize calls to memory->WRITE using caching
 void Cache::WRITEB(address a, byte value)
 {
 	CacheLine cl = READCL(a & ADDRESSMASK, true);
@@ -115,6 +116,7 @@ void Cache::WRITEB(address a, byte value)
 	}
 }
 
+//Writes a 16-bit integer. Crashes when asked for values split over multiple cachelines
 void Cache::WRITEB16(address a, short value)
 {
 	CacheLine cl = READCL(a & ADDRESSMASK, true);
@@ -135,6 +137,7 @@ void Cache::WRITEB16(address a, short value)
 	}
 }
 
+//Writes a 32-bit integer. Crashes when asked for values split over multiple cachelines
 void Cache::WRITEB32(address a, int value)
 {
 	CacheLine cl = READCL(a & ADDRESSMASK, true);
@@ -159,8 +162,8 @@ void Cache::WRITEB32(address a, int value)
 
 
 
-// read a single byte from memory
-// TODO: minimize calls to memory->READ using caching
+// read a single byte from memory 
+// isWrite parameter is used to display separate debug information for write and read operations
 CacheLine Cache::READCL(address a, bool isWrite)
 {
 	_ASSERT((a & OFFSETMASK) == 0);
@@ -191,11 +194,13 @@ CacheLine Cache::READCL(address a, bool isWrite)
 					wtotalHits++;
 				}
 #if EVICTION == 2
+				//Set the marker bit for Bit-PLRU
 				slot[i].tag |= LRUMARKER;
 #elif EVICTION == 3 || EVICTION == 4
+				//Update the tree for tree based PLRU implementations
 				UpdateLRUTree(lot[(a&slotMask) >> 6], i);
 #elif EVICTION == 5
-				
+				//Update all LRU counters for the full LRU
 				slot[i].ltag = 0;
 				slot[i].tag |= VALID;
 
@@ -205,32 +210,24 @@ CacheLine Cache::READCL(address a, bool isWrite)
 						continue;
 					slot[j].ltag++;
 				}
-				/*
-				int curValue = (slot[i].tag & LRUMASK);
-				for (int j = 0; j < NWAYN; j++)
-					if ((slot[j].tag & LRUMASK) < curValue)
-						slot[j].tag += (1 << 2);
-
-				slot[i].tag &= ~LRUMASK;
-				slot[i].tag |= VALID;
-				*/
 #endif
 				return slot[i];
 			}
 	}
 
+	//If it's not found update the miss counter
 	if (!isWrite)
 	{
 		rMisses++;
 		rtotalMisses++;
 	}
-
 	else
 	{
 		wMisses++;
 		wtotalMisses++;
 	}
 
+	//And search further
 	return ReadMiss(a, isWrite);
 }
 
@@ -260,7 +257,7 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 	}
 
 	// --------------------------------------
-	// Evict a slot to make room for new data
+	// Evict a random slot to make room for new data
 	// --------------------------------------
 
 	int randomNumber = rand() % (NWAYN);
@@ -285,7 +282,7 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 	CacheLine line = memory->READCL(a, isWrite);
 
 	// --------------------------------------
-	// Evict a slot to make room for new data
+	// Evict the oldest slot
 	// --------------------------------------
 
 	if (slot[lot->evictionData].IsDirty())
@@ -293,6 +290,7 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 
 	slot[lot->evictionData] = line;
 	slot[lot->evictionData].tag = a | VALID;
+	//Update pointer to point to the next to be replaced element
 	lot->evictionData = ++lot->evictionData & (NWAYN - 1);
 	if (!isWrite)
 		rEvict++;
@@ -315,6 +313,7 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 	int target = -1;
 	for (int i = 0; i < NWAYN; i++)
 	{
+		//If invalid, replace immediately
 		if (!slot[i].IsValid())
 		{
 			slot[i] = line;
@@ -325,18 +324,21 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 				wCacheAdd++;
 			return line;
 		}
+		//If the marler is not set, remember the current slot
 		if (!(slot[i].tag & LRUMARKER))
 			target = i;
 	}
-	// --------------------------------------
-	// Evict a slot to make room for new data
-	// --------------------------------------
+
+	//If all slots have their marker set to 1, set them to 0 and return the first slot
 	if (target == -1)
 	{
 		for (int i = 0; i < NWAYN; i++)
 			slot[i].tag &= ~LRUMARKER;
 		target = 0;
 	}
+	// --------------------------------------
+	// Evict a slot to make room for new data
+	// --------------------------------------
 
 	if (slot[target].IsDirty())
 		memory->WRITECL(slot[target].tag & ADDRESSMASK, slot[target]);
@@ -355,6 +357,7 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 
 void Cache::UpdateLRUTree(ParkingLot &lot, int i)
 {
+	//Walk through the tree, analogues to binary search, updating all bits along the path
 	int node = NWAYN / 2;
 	for (int step = NWAYN / 2; step > 0;)
 	{
@@ -375,6 +378,7 @@ void Cache::UpdateLRUTree(ParkingLot &lot, int i)
 
 int Cache::TreeFindLRU(ParkingLot &lot)
 {
+	//Walk through the tree, analogues to binary search, updating all bits along the path
 	int node = NWAYN / 2;
 	for (int step = NWAYN / 2; step > 0; )
 	{

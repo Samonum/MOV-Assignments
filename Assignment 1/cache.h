@@ -1,8 +1,8 @@
 #pragma once
 
-#define L1CACHESIZE		8192		/4			// total L1$ size, in bytes
-#define L2CACHESIZE		16384		/4			// total L2$ size, in bytes
-#define L3CACHESIZE		65536		/4			// total L3$ size, in bytes
+#define L1CACHESIZE		8192					// total L1$ size, in bytes
+#define L2CACHESIZE		16384					// total L2$ size, in bytes
+#define L3CACHESIZE		65536					// total L3$ size, in bytes
 #define SLOTSIZE		64						// cache slot size, in bytes
 #define ADDRESSMASK		(0x1000000 - SLOTSIZE)	// used for masking out lowest log2(SLOTSIZE) bits
 #define OFFSETMASK		(SLOTSIZE - 1)			// used for masking out bits above log2(SLOTSIZE)
@@ -48,9 +48,7 @@ inline bool CacheLine::IsDirty()
 class MemCac
 {
 public:
-	virtual byte READB(address a) = 0;
 	virtual CacheLine READCL(address a, bool wrrite = false) = 0;
-	virtual void WRITEB(address a, byte) = 0;
 	virtual void WRITECL(address a, CacheLine& line) = 0;
 };
 
@@ -60,11 +58,9 @@ public:
 	// ctor/dtor
 	Memory( uint size );
 	~Memory();
-	byte READB(address a) { return 0; };
 	CacheLine READCL(address a, bool write = false);
-	void WRITEB(address a, byte) {};
 	void WRITECL(address a, CacheLine& line);
-	void ConsoleWrite();
+
 	// data members
 	CacheLine* data;
 	int* tag;
@@ -86,6 +82,12 @@ public:
 	CacheLine ReadMiss(address a, bool isWrite);
 	void WRITEB(address a, byte);
 	void WRITECL(address a, CacheLine& line);
+
+	short READB16(address a);
+	int READB32(address a);
+	void WRITEB16(address a, short v);
+	void WRITEB32(address a, int v);
+
 	void ResetStats();
 	void ConsoleDebug();
 	// TODO: READ/WRITE functions for (aligned) 16 and 32-bit values

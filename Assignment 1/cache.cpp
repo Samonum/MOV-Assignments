@@ -43,11 +43,6 @@ void Memory::WRITECL( address a, CacheLine& line )
 	data[a / SLOTSIZE] = line;
 }
 
-void Memory::ConsoleWrite()
-{
-
-}
-
 // ------------------------------------------------------------------
 // CACHE SIMULATOR
 // Currently passes all requests directly to simulated RAM.
@@ -88,6 +83,81 @@ byte Cache::READB(address a)
 	return READCL(a & ADDRESSMASK).value[a & OFFSETMASK];
 }
 
+short Cache::READB16(address a)
+{
+	CacheLine line = READCL(a & ADDRESSMASK);
+	return (line.value[a & OFFSETMASK] <<8) | line.value[(a&OFFSETMASK) + 1];
+}
+int Cache::READB32(address a)
+{
+	CacheLine line = READCL(a & ADDRESSMASK);
+	return (line.value[a & OFFSETMASK] <<24) | (line.value[(a&OFFSETMASK) + 1] << 16) | 
+		(line.value[(a&OFFSETMASK) + 2] << 8) | line.value[(a&OFFSETMASK) + 3];
+}
+
+// write a single byte to memory
+// TODO: minimize calls to memory->WRITE using caching
+void Cache::WRITEB(address a, byte value)
+{
+	CacheLine cl = READCL(a & ADDRESSMASK, true);
+	cl.value[a&OFFSETMASK] = value;
+	cl.tag |= DIRTY | VALID;
+
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (slot[i].IsValid())
+			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
+			{
+				slot[i] = cl;
+				slot[i].tag |= DIRTY;
+				return;
+			}
+	}
+}
+
+void Cache::WRITEB16(address a, short value)
+{
+	CacheLine cl = READCL(a & ADDRESSMASK, true);
+	cl.value[a&OFFSETMASK] = value >> 8;
+	cl.value[(a&OFFSETMASK) + 1] = value;
+	cl.tag |= DIRTY | VALID;
+
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (slot[i].IsValid())
+			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
+			{
+				slot[i] = cl;
+				slot[i].tag |= DIRTY;
+				return;
+			}
+	}
+}
+
+void Cache::WRITEB32(address a, int value)
+{
+	CacheLine cl = READCL(a & ADDRESSMASK, true);
+	cl.value[a&OFFSETMASK] = value >>24;
+	cl.value[(a&OFFSETMASK) + 1] = value >> 16;
+	cl.value[(a&OFFSETMASK) + 2] = value >> 8;
+	cl.value[(a&OFFSETMASK) + 3] = value;
+	cl.tag |= DIRTY | VALID;
+
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (slot[i].IsValid())
+			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
+			{
+				slot[i] = cl;
+				slot[i].tag |= DIRTY;
+				return;
+			}
+	}
+}
+
 
 
 // read a single byte from memory
@@ -99,6 +169,7 @@ CacheLine Cache::READCL(address a, bool isWrite)
 		read++;
 	else
 		write++;
+
 	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
 
 	// -----------------------------------
@@ -155,11 +226,13 @@ CacheLine Cache::READCL(address a, bool isWrite)
 		rMisses++;
 		rtotalMisses++;
 	}
+
 	else
 	{
 		wMisses++;
 		wtotalMisses++;
 	}
+
 	// update memory access cost
 	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
 								// request a full line from memory
@@ -562,28 +635,6 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 
 // write a single byte to memory
 // TODO: minimize calls to memory->WRITE using caching
-void Cache::WRITEB( address a, byte value )
-{
-	CacheLine cl = READCL(a & ADDRESSMASK, true);
-	cl.value[a&OFFSETMASK] = value;
-	cl.tag |= DIRTY | VALID;
-
-	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
-	for (int i = 0; i < NWAYN; i++)
-	{
-		if (slot[i].IsValid())
-			if ((a & ADDRESSMASK) == (slot[i].tag & ADDRESSMASK))
-			{
-				slot[i] = cl;
-				slot[i].tag |= DIRTY;
-				totalCost += L1ACCESSCOST;
-				return;
-			}
-	}
-}
-
-// write a single byte to memory
-// TODO: minimize calls to memory->WRITE using caching
 void Cache::WRITECL(address a, CacheLine& line)
 {
 	CacheLine cl = READCL(a & ADDRESSMASK, true);
@@ -600,6 +651,7 @@ void Cache::WRITECL(address a, CacheLine& line)
 			}
 	}
 }
+
 
 void Cache::ResetStats()
 {

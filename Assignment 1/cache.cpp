@@ -362,13 +362,16 @@ void Cache::UpdateLRUTree(ParkingLot &lot, int i)
 	for (int step = NWAYN / 2; step > 0;)
 	{
 		step /= 2;
+		//Compare if the current node is bigger than the target node
 		if (i < node)
 		{
+			//Set node to 0
 			lot.evictionData &= ~(1 << node);
 			node -= step;
 		}
 		else
 		{
+			//Set node to 1
 			lot.evictionData |= 1 << node;
 			node += step;
 		}
@@ -383,33 +386,33 @@ int Cache::TreeFindLRU(ParkingLot &lot)
 	for (int step = NWAYN / 2; step > 0; )
 	{
 		step /= 2;
+		//Look if the current node is set to 1
 		if ((lot.evictionData >> node) & 1)
 		{
+			//Set node to 0
 			lot.evictionData &= ~(1 << node);
 			node -= step;
 		}
 		else
 		{
+			//Set node to 1
 			lot.evictionData |= 1 << node;
 			node += step;
 		}
 	}
-	cout << ((lot.evictionData >> node) & 1);
-	//TODO: think about whether or not the 1- should be there.
+	//Return the leave indicated by the final node
 	return node - (1 - ((lot.evictionData >> node) & 1));
 }
 
 CacheLine Cache::ReadMiss(address a, bool isWrite)
 {
-	ParkingLot dbg = ParkingLot();
-	dbg.evictionData = 0b00010000;
-	int fewr = TreeFindLRU(dbg);
-
 	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
 	CacheLine line = memory->READCL(a, isWrite);
 	// --------------------------------------
 	// Evict a slot to make room for new data
 	// --------------------------------------
+
+	//Request the to be replaced address
 	int target = TreeFindLRU(lot[(a&slotMask) >> 6]);
 	if (slot[target].IsDirty())
 		memory->WRITECL(slot[target].tag & ADDRESSMASK, slot[target]);
@@ -462,6 +465,7 @@ void Cache::UpdateLRUTree(ParkingLot &lot, int i)
 			else
 				lot.evictionData |= 1 << node;
 		}
+		//Return history
 		lot.evictionData = (lot.evictionData & ((1 << 16) - 1)) + (hist << 16);
 	}
 
@@ -469,6 +473,7 @@ void Cache::UpdateLRUTree(ParkingLot &lot, int i)
 
 int Cache::TreeFindLRU(ParkingLot &lot)
 {
+	//Extract history
 	int hist = lot.evictionData >> 16;
 	int node = NWAYN / 2;
 	for (int step = NWAYN / 2; step > 0; )
@@ -478,27 +483,33 @@ int Cache::TreeFindLRU(ParkingLot &lot)
 		{
 			if (step != 0)
 			{
+				//Update history tree with current node
 				lot.evictionData ^= (-((hist >> node) & 1) ^ lot.evictionData) & (1 << node);
+				//Set the history node to 0
 				hist &= ~(1 << node);
 				node -= step;
 			}
 			else
+				//Ignore history for the final node
 				lot.evictionData &= ~(1 << node);
 		}
 		else
 		{
 			if (step != 0)
 			{
+				//Update history tree with current node
 				lot.evictionData ^= (-((hist >> node) & 1) ^ lot.evictionData) & (1 << node);
+				//Set the history node to 0
 				hist |= 1 << node;
 				node += step;
 			}
 			else
+				//Ignore history for the final node
 				lot.evictionData |= 1 << node;
 		}
 	}
+	//Return hstory
 	lot.evictionData = (lot.evictionData & ((1 << 16) - 1)) + (hist << 16);
-	//TODO: think about whether or not the 1- should be there.
 	return node - (1 - ((lot.evictionData >> node) & 1));
 }
 
@@ -531,7 +542,6 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 {
 	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
 	CacheLine line = memory->READCL(a, isWrite);
-	// return the requested byte
 
 	// --------------------------------------
 	// Evict a slot to make room for new data
@@ -563,6 +573,7 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 	int maxTag = 0;
 	int maxIndex = -1;
 
+	//Find the cacheline that hasn't been used for the longest
 	for (int i = 0; i < NWAYN; i++)
 	{
 		if (slot[i].ltag > maxTag)
@@ -572,6 +583,7 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 		}
 	}
 
+	//Write it back if dirty
 	if (slot[maxIndex].IsDirty())
 		memory->WRITECL(slot[maxIndex].tag & ADDRESSMASK, slot[maxIndex]);
 
@@ -579,6 +591,7 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 	slot[maxIndex].tag = (a & ADDRESSMASK) | VALID;
 	slot[maxIndex].ltag = 0;
 
+	//Increase the LRU counter for all but the current cacheline
 	for (int i = 0; i < NWAYN; i++)
 	{
 		if (i == maxIndex)
@@ -594,8 +607,11 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 // TODO: minimize calls to memory->WRITE using caching
 void Cache::WRITECL(address a, CacheLine& line)
 {
+	//Read the cacheline to make sure it's in L1
 	CacheLine cl = READCL(a & ADDRESSMASK, true);
 	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
+
+	//Update the desired address
 	for (int i = 0; i < NWAYN; i++)
 	{
 		if (slot[i].IsValid())

@@ -631,7 +631,7 @@ void Cache::ResetStats()
 
 void Cache::ConsoleDebug()
 {
-	printf("L%i  Read H/L:%i/%i Total Write H/L:%i/%i\n", level, rtotalHits, rtotalMisses, wtotalHits, wtotalMisses);
+	printf("L%i Total Read H/L:%i/%i Total Write H/L:%i/%i\n", level, rtotalHits, rtotalMisses, wtotalHits, wtotalMisses);
 	printf("Read %i, hits:misses %i:%i, evictions / cacheAdds %i / %i\n", read, rHits, rMisses, rEvict, rCacheAdd);
 	printf("Write %i, hits:misses %i:%i, evictions / cacheAdds %i / %i\n", write, wHits, wMisses, wEvict, wCacheAdd);
 	printf("--------------------------------------------------------------------\n");

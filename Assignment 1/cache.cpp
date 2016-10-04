@@ -111,15 +111,9 @@ CacheLine Cache::READCL(address a, bool isWrite)
 			if (a == (slot[i].tag & ADDRESSMASK))
 			{
 				if (!isWrite)
-				{
 					rHits++;
-					rtotalHits++;
-				}
 				else
-				{
 					wHits++;
-					wtotalHits++;
-				}
 				totalCost += L1ACCESSCOST;
 #if EVICTION == 2
 				slot[i].tag |= LRUMARKER;
@@ -151,15 +145,9 @@ CacheLine Cache::READCL(address a, bool isWrite)
 	}
 
 	if (!isWrite)
-	{
 		rMisses++;
-		rtotalMisses++;
-	}
 	else
-	{
 		wMisses++;
-		wtotalMisses++;
-	}
 	// update memory access cost
 	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
 								// request a full line from memory
@@ -603,6 +591,10 @@ void Cache::WRITECL(address a, CacheLine& line)
 
 void Cache::ResetStats()
 {
+	rtotalHits += rHits;
+	rtotalMisses += rMisses;
+	wtotalHits += wHits;
+	wtotalMisses += wMisses;
 	rHits = rMisses = rCacheAdd = rEvict = read = write = wEvict = wCacheAdd = wHits = wMisses = 0;
 }
 

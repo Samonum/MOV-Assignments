@@ -66,7 +66,6 @@ Cache::Cache( MemCac* mem, int cSize, int l )
 	lot = new ParkingLot[cSize / SLOTSIZE / NWAYN];
 	memory = mem;
 	level = l;
-	totalCost = 0;
 	ResetStats();
 }
 
@@ -191,7 +190,6 @@ CacheLine Cache::READCL(address a, bool isWrite)
 					wHits++;
 					wtotalHits++;
 				}
-				totalCost += L1ACCESSCOST;
 #if EVICTION == 2
 				slot[i].tag |= LRUMARKER;
 #elif EVICTION == 3 || EVICTION == 4
@@ -233,9 +231,6 @@ CacheLine Cache::READCL(address a, bool isWrite)
 		wtotalMisses++;
 	}
 
-	// update memory access cost
-	totalCost += RAMACCESSCOST;	// TODO: replace by L1ACCESSCOST for a hit
-								// request a full line from memory
 	return ReadMiss(a, isWrite);
 }
 
@@ -575,13 +570,7 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 
 	if (slot[maxIndex].IsDirty())
 		memory->WRITECL(slot[maxIndex].tag & ADDRESSMASK, slot[maxIndex]);
-	/*
-	//DIRTYCHECKING
-	int randomNumber = rand() % (NWAYN);
 
-	if (slot[randomNumber].IsDirty())
-		memory->WRITE(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
-		*/
 	slot[maxIndex] = line;
 	slot[maxIndex].tag = (a & ADDRESSMASK) | VALID;
 	slot[maxIndex].ltag = 0;
@@ -594,42 +583,6 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 	}
 	rEvict++;
 	return line;
-	
-	/*
-	int bigSlot = -1;
-	int bigValue = 0;
-
-	for (int i = 0; i < NWAYN; i++)
-	{
-		int thisValue = (slot[i].tag & LRUMASK);
-		if (thisValue >= bigValue)
-		{
-			bigSlot = i;
-			bigValue = thisValue;
-		}
-	}
-
-	_ASSERT(bigSlot != -1);
-
-	for (int i = 0; i < NWAYN; i++)
-	{
-		if (i == bigSlot)
-			continue;
-		slot[i].tag += (1 << 2);
-	}
-
-	if (slot[bigSlot].IsDirty())
-		memory->WRITECL(slot[bigSlot].tag & ADDRESSMASK, slot[bigSlot]);
-
-	slot[bigSlot] = line;
-	slot[bigSlot].tag &= ~LRUMASK;
-	slot[bigSlot].tag |= VALID;
-
-	if (!isWrite)
-		rEvict++;
-	else
-		wEvict++;
-	return line;*/
 }
 #endif
 
@@ -646,12 +599,10 @@ void Cache::WRITECL(address a, CacheLine& line)
 			{
 				slot[i] = line;
 				slot[i].tag |= DIRTY;
-				totalCost += L1ACCESSCOST;
 				return;
 			}
 	}
 }
-
 
 void Cache::ResetStats()
 {

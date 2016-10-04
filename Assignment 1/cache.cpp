@@ -125,6 +125,26 @@ CacheLine Cache::READCL(address a, bool isWrite)
 				slot[i].tag |= LRUMARKER;
 #elif EVICTION == 3 || EVICTION == 4
 				UpdateLRUTree(lot[(a&slotMask) >> 6], i);
+#elif EVICTION == 5
+				
+				slot[i].ltag = 0;
+				slot[i].tag |= VALID;
+
+				for (int j = 0; j < NWAYN; j++)
+				{
+					if (j == i)
+						continue;
+					slot[j].ltag++;
+				}
+				/*
+				int curValue = (slot[i].tag & LRUMASK);
+				for (int j = 0; j < NWAYN; j++)
+					if ((slot[j].tag & LRUMASK) < curValue)
+						slot[j].tag += (1 << 2);
+
+				slot[i].tag &= ~LRUMASK;
+				slot[i].tag |= VALID;
+				*/
 #endif
 				return slot[i];
 			}
@@ -434,6 +454,110 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 	return line;
 }
 
+#elif EVICTION == 5
+CacheLine Cache::ReadMiss(address a, bool isWrite)
+{
+	CacheLine* slot = lot[(a&slotMask) >> 6].cacheLine;
+	CacheLine line = memory->READCL(a, isWrite);
+	// return the requested byte
+
+	// --------------------------------------
+	// Evict a slot to make room for new data
+	// --------------------------------------
+	
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (!slot[i].IsValid())
+		{
+			slot[i] = line;
+			slot[i].tag = (a & ADDRESSMASK) | VALID;
+			slot[i].ltag = 0;
+
+			for (int j = 0; j < NWAYN; j++)
+			{
+				if (j == i)
+					continue;
+				slot[j].ltag++;
+			}
+			rCacheAdd++;
+			return line;
+		}
+	}
+
+	// --------------------------------------
+	// Evict a slot to make room for new data
+	// --------------------------------------
+
+	int maxTag = 0;
+	int maxIndex = -1;
+
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (slot[i].ltag > maxTag)
+		{
+			maxTag = slot[i].ltag;
+			maxIndex = i;
+		}
+	}
+
+	if (slot[maxIndex].IsDirty())
+		memory->WRITECL(slot[maxIndex].tag & ADDRESSMASK, slot[maxIndex]);
+	/*
+	//DIRTYCHECKING
+	int randomNumber = rand() % (NWAYN);
+
+	if (slot[randomNumber].IsDirty())
+		memory->WRITE(slot[randomNumber].tag & ADDRESSMASK, slot[randomNumber]);
+		*/
+	slot[maxIndex] = line;
+	slot[maxIndex].tag = (a & ADDRESSMASK) | VALID;
+	slot[maxIndex].ltag = 0;
+
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (i == maxIndex)
+			continue;
+		slot[i].ltag++;
+	}
+	rEvict++;
+	return line;
+	
+	/*
+	int bigSlot = -1;
+	int bigValue = 0;
+
+	for (int i = 0; i < NWAYN; i++)
+	{
+		int thisValue = (slot[i].tag & LRUMASK);
+		if (thisValue >= bigValue)
+		{
+			bigSlot = i;
+			bigValue = thisValue;
+		}
+	}
+
+	_ASSERT(bigSlot != -1);
+
+	for (int i = 0; i < NWAYN; i++)
+	{
+		if (i == bigSlot)
+			continue;
+		slot[i].tag += (1 << 2);
+	}
+
+	if (slot[bigSlot].IsDirty())
+		memory->WRITECL(slot[bigSlot].tag & ADDRESSMASK, slot[bigSlot]);
+
+	slot[bigSlot] = line;
+	slot[bigSlot].tag &= ~LRUMASK;
+	slot[bigSlot].tag |= VALID;
+
+	if (!isWrite)
+		rEvict++;
+	else
+		wEvict++;
+	return line;*/
+}
 #endif
 
 // write a single byte to memory

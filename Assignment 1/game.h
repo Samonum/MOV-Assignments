@@ -1,7 +1,7 @@
 #pragma once
 
 #define SCRWIDTH	 800
-#define SCRHEIGHT	 800
+#define SCRHEIGHT	 720
 #define L1CACHECOLOR 0x33FF33
 #define L2CACHECOLOR 0x337733
 #define L3CACHECOLOR 0xFFFF33

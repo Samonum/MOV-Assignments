@@ -1,0 +1,1 @@
+First of, we add white space to the code, to make it more readable. An additional benifit to this is that profilers such as VerySleepy give the time required per line, so if there are multiple instructions on a single line, it is difficult to pinpoint which instruction takes the most time.

@@ -1,5 +1,7 @@
 #include "template.h"
 
+#define DEV
+
 // global data (source scope)
 static Game* game;
 
@@ -291,6 +293,7 @@ void Game::DrawTanks()
 // Game::PlayerInput - handle player input
 void Game::PlayerInput()
 {
+#ifndef DEV
 	if (m_LButton)
 	{
 		// start line
@@ -309,6 +312,7 @@ void Game::PlayerInput()
 		m_Surface->Line( (float)m_MouseX, 0, (float)m_MouseX, SCRHEIGHT - 1, 0xffffff );
 	}
 	m_PrevButton = m_LButton;
+#endif
 }
 
 // Game::Tick - main game loop

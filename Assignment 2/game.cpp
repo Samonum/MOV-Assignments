@@ -296,16 +296,14 @@ void Game::Init(bool loadState)
 		while (getline(loadFile, line))
 		{
 			if (line == "-")
-			{
-				teamFlag = 4;
 				break;
-			}
+
 			Tank* t = m_Tank[i] = new Tank();
 
 			string::size_type sz;
 			string::size_type fullSize = 0;
 
-			t->flags |= std::stoi(line, &sz);
+			t->flags = std::stoi(line, &sz);
 			fullSize += sz;
 
 			float x1 = std::stof(line.substr(fullSize), &sz);
@@ -319,9 +317,9 @@ void Game::Init(bool loadState)
 			float y2 = std::stof(line.substr(fullSize), &sz);
 			fullSize += sz;
 			t->speed = float2(x2, y2);
-			t->flags |= teamFlag;
 			t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
 			i++;
+
 		}
 
 		float2 redTarget;
@@ -339,7 +337,7 @@ void Game::Init(bool loadState)
 			string::size_type sz;
 			string::size_type fullSize = 0;
 
-			t->flags |= std::stoi(line, &sz);
+			t->flags = std::stoi(line, &sz);
 			fullSize += sz;
 
 			float x1 = std::stof(line.substr(fullSize), &sz);
@@ -353,7 +351,6 @@ void Game::Init(bool loadState)
 			float y2 = std::stof(line.substr(fullSize), &sz);
 			fullSize += sz;
 			t->speed = float2(x2, y2);
-			t->flags |= teamFlag;
 			t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
 			i++;
 		}
@@ -451,7 +448,7 @@ void Game::SaveState()
 		{
 			Tank* t = m_Tank[i];
 
-			saveFile << ((t->flags & Tank::ACTIVE) ? 1 : 0) << DELIMITER;
+			saveFile << t->flags << DELIMITER;
 			saveFile << t->pos.x << DELIMITER << t->pos.y << DELIMITER;
 			saveFile << t->speed.x << DELIMITER << t->speed.y;
 			saveFile << "\n";
@@ -473,7 +470,7 @@ void Game::SaveState()
 	{
 		Tank* t = m_Tank[i];
 
-		saveFile << ((t->flags & Tank::ACTIVE) ? 1 : 0) << DELIMITER;
+		saveFile << t->flags << DELIMITER;
 		saveFile << t->pos.x << DELIMITER << t->pos.y << DELIMITER;
 		saveFile << t->speed.x << DELIMITER << t->speed.y;
 		saveFile << "\n";

@@ -3,7 +3,7 @@
 #include <fstream>
 #include <string>
 
-#define DEVa
+#define DEV
 
 // global data (source scope)
 static Game* game;
@@ -204,7 +204,7 @@ void Tank::Tick()
 }
 
 // Game::Init - Load data, setup playfield
-void Game::Init()
+void Game::Init(bool loadState)
 {
 	m_Heights = new Surface("testdata/heightmap.png");
 	m_Backdrop = new Surface(1024, 768);
@@ -236,39 +236,139 @@ void Game::Init()
 			a2[idx] = AddBlend(a1[u + v * 1024], ScaleColor(ScaleColor(0x33aa11, r) + ScaleColor(0xffff00, (255 - r)), (int)(max(0.0f, dt) * 80.0f) + 10));
 		}
 
-	m_Tank = new Tank*[MAXP1 + MAXP2];
-
 	m_P1Sprite = new Sprite( new Surface( "testdata/p1tank.tga" ), 1, Sprite::FLARE );
 	m_P2Sprite = new Sprite( new Surface( "testdata/p2tank.tga" ), 1, Sprite::FLARE );
 	m_PXSprite = new Sprite( new Surface( "testdata/deadtank.tga" ), 1, Sprite::BLACKFLARE );
 	m_Smoke = new Sprite( new Surface( "testdata/smoke.tga" ), 10, Sprite::FLARE );
 
-	// create blue tanks
-	for ( unsigned int i = 0; i < MAXP1; i++ )
+	if (!loadState)
 	{
-		Tank* t = m_Tank[i] = new Tank();
-		t->pos = float2( (float)((i % 5) * 20), (float)((i / 5) * 20 + 50) );
-		t->target = float2( SCRWIDTH, SCRHEIGHT ); // initially move to bottom right corner
-		t->speed = float2(0, 0);
-		t->flags = Tank::ACTIVE | Tank::P1;
-		t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
+		m_Tank = new Tank*[MAXP1 + MAXP2];
+		// create blue tanks
+		for (unsigned int i = 0; i < MAXP1; i++)
+		{
+			Tank* t = m_Tank[i] = new Tank();
+			t->pos = float2((float)((i % 5) * 20), (float)((i / 5) * 20 + 50));
+			t->target = float2(SCRWIDTH, SCRHEIGHT); // initially move to bottom right corner
+			t->speed = float2(0, 0);
+			t->flags = Tank::ACTIVE | Tank::P1;
+			t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
+		}
+
+
+		// create red tanks
+		for (unsigned int i = 0; i < MAXP2; i++)
+		{
+			Tank* t = m_Tank[i + MAXP1] = new Tank();
+			t->pos = float2((float)((i % 12) * 20 + 900), (float)((i / 12) * 20 + 600));
+			t->target = float2(424, 336); // move to player base
+			t->speed = float2(0, 0);
+			t->flags = Tank::ACTIVE | Tank::P2;
+			t->maxspeed = 0.3f;
+		}
+	}
+	else
+	{
+		ifstream loadFile("save.state");
+
+		if (!loadFile.is_open())
+			return;
+
+		string line;
+		int teamFlag = 2;
+
+		if (getline(loadFile, line))
+		{
+			delete m_Tank;
+			m_Tank = new Tank*[stoi(line)];
+		}
+
+		float2 bluTarget;
+		if (getline(loadFile, line))
+		{
+			string::size_type sz;
+			bluTarget.x = std::stof(line, &sz);
+			bluTarget.y = std::stof(line.substr(sz));
+		}
+
+		int i = 0;
+
+		while (getline(loadFile, line))
+		{
+			if (line == "-")
+			{
+				teamFlag = 4;
+				break;
+			}
+			Tank* t = m_Tank[i] = new Tank();
+
+			string::size_type sz;
+			string::size_type fullSize = 0;
+
+			t->flags |= std::stoi(line, &sz);
+			fullSize += sz;
+
+			float x1 = std::stof(line.substr(fullSize), &sz);
+			fullSize += sz;
+			float y1 = std::stof(line.substr(fullSize), &sz);
+			fullSize += sz;
+			t->pos = float2(x1, y1);
+			t->target = bluTarget;
+			float x2 = std::stof(line.substr(fullSize), &sz);
+			fullSize += sz;
+			float y2 = std::stof(line.substr(fullSize), &sz);
+			fullSize += sz;
+			t->speed = float2(x2, y2);
+			t->flags |= teamFlag;
+			t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
+			i++;
+		}
+
+		float2 redTarget;
+		if (getline(loadFile, line))
+		{
+			string::size_type sz;
+			redTarget.x = std::stof(line, &sz);
+			redTarget.y = std::stof(line.substr(sz));
+		}
+
+		while (getline(loadFile, line))
+		{
+			Tank* t = m_Tank[i] = new Tank();
+
+			string::size_type sz;
+			string::size_type fullSize = 0;
+
+			t->flags |= std::stoi(line, &sz);
+			fullSize += sz;
+
+			float x1 = std::stof(line.substr(fullSize), &sz);
+			fullSize += sz;
+			float y1 = std::stof(line.substr(fullSize), &sz);
+			fullSize += sz;
+			t->pos = float2(x1, y1);
+			t->target = redTarget;
+			float x2 = std::stof(line.substr(fullSize), &sz);
+			fullSize += sz;
+			float y2 = std::stof(line.substr(fullSize), &sz);
+			fullSize += sz;
+			t->speed = float2(x2, y2);
+			t->flags |= teamFlag;
+			t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
+			i++;
+		}
+
+		loadFile.close();
 	}
 
-	// create red tanks
-	for ( unsigned int i = 0; i < MAXP2; i++ )
-	{
-		Tank* t = m_Tank[i + MAXP1] = new Tank();
-		t->pos = float2( (float)((i % 12) * 20 + 900), (float)((i / 12) * 20 + 600) );
-		t->target = float2( 424, 336 ); // move to player base
-		t->speed = float2(0, 0);
-		t->flags = Tank::ACTIVE | Tank::P2;
-		t->maxspeed = 0.3f;
-	}
+	for (unsigned int i = 0; i < MAXBULLET; i++)
+		bullet[i].flags = 0;
+
+	aliveP1 = MAXP1;
+	aliveP2 = MAXP2;
 
 	game = this; // for global reference
 	m_LButton = m_PrevButton = false;
-
-	SaveState();
 }
 
 // Game::DrawTanks - draw the tanks
@@ -320,11 +420,7 @@ void Game::PlayerInput()
 		m_Surface->Line( 0, (float)m_MouseY, SCRWIDTH - 1, (float)m_MouseY, 0xffffff );
 		m_Surface->Line( (float)m_MouseX, 0, (float)m_MouseX, SCRHEIGHT - 1, 0xffffff );
 	}
-	m_PrevButton = m_LButton;
-#else
-	if (m_LButton)
-		LoadState();
-			
+	m_PrevButton = m_LButton;	
 #endif
 }
 
@@ -337,7 +433,7 @@ void Tmpl8::Game::KeyUp(int a_Key)
 	if (a_Key == 22)
 		SaveState();
 	else if (a_Key == 15)
-		LoadState();
+		Init(true);
 }
 
 void Game::SaveState()
@@ -384,108 +480,6 @@ void Game::SaveState()
 	}
 
 	saveFile.close();
-}
-
-void Game::LoadState() 
-{
-	ifstream loadFile ("save.state");
-	/*
-	std::string s = "scott>=tiger";
-	std::string delimiter = ">=";
-	std::string token = s.substr(0, s.find(delimiter)); // token is "scott"
-	*/
-	if (!loadFile.is_open())
-		return;
-
-	string line;
-	int teamFlag = 2;
-
-	if (getline(loadFile, line))
-		m_Tank = new Tank*[stoi(line)];
-
-	float2 bluTarget;
-	if (getline(loadFile, line))
-	{
-		cout << line << "\n";
-		string::size_type sz;
-		bluTarget.x = std::stof(line, &sz);
-		bluTarget.y = std::stof(line.substr(sz));
-	}
-
-	int i = 0;
-
-	while (getline(loadFile, line))
-	{
-		if (line == "-")
-		{
-			teamFlag = 4;
-			break;
-		}
-		cout << line << "\n";
-		Tank* t = m_Tank[i] = new Tank();
-
-		string::size_type sz;
-		string::size_type fullSize = 0;
-
-		t->flags |= std::stoi(line, &sz);
-		fullSize += sz;
-
-		float x1 = std::stof(line.substr(fullSize), &sz);
-		fullSize += sz;
-		float y1 = std::stof(line.substr(fullSize), &sz);
-		fullSize += sz;
-		t->pos = float2(x1, y1);
-		t->target = bluTarget;
-		float x2 = std::stof(line.substr(fullSize), &sz);
-		fullSize += sz;
-		float y2 = std::stof(line.substr(fullSize), &sz);
-		fullSize += sz;
-		t->speed = float2(x2, y2);
-		t->flags |= teamFlag;
-		t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
-		i++;
-	}
-
-	float2 redTarget;
-	if (getline(loadFile, line))
-	{
-		cout << line << "\n";
-		string::size_type sz;
-		redTarget.x = std::stof(line, &sz);
-		redTarget.y = std::stof(line.substr(sz));
-	}
-
-	while (getline(loadFile, line))
-	{
-		cout << line << "\n";
-		Tank* t = m_Tank[i] = new Tank();
-
-		string::size_type sz;
-		string::size_type fullSize = 0;
-
-		t->flags |= std::stoi(line, &sz);
-		fullSize += sz;
-
-		float x1 = std::stof(line.substr(fullSize), &sz);
-		fullSize += sz;
-		float y1 = std::stof(line.substr(fullSize), &sz);
-		fullSize += sz;
-		t->pos = float2(x1, y1);
-		t->target = redTarget;
-		float x2 = std::stof(line.substr(fullSize), &sz);
-		fullSize += sz;
-		float y2 = std::stof(line.substr(fullSize), &sz);
-		fullSize += sz;
-		t->speed = float2(x2, y2);
-		t->flags |= teamFlag;
-		t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
-		i++;
-	}
-
-	for (unsigned int i = 0; i < MAXBULLET; i++)
-		bullet[i].flags = 0;
-
-	loadFile.close();
 }
 
 // Game::Tick - main game loop

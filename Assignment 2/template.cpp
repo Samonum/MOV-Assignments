@@ -137,7 +137,7 @@ int main( int argc, char **argv )
 		SDL_RenderPresent( renderer );
 		if (firstframe)
 		{
-			game->Init();
+			game->Init(false);
 			firstframe = false;
 		}
 		// calculate frame time and pass it to game->Tick

@@ -13,3 +13,5 @@ Of each tank
 
 Can save state with s and load with l
 
+The first run, we just let run for a considerable time. The armies meet and get stuck in the middle.
+Report1: Biggest bottlenecks are mountain handling and evade handling of other tanks.

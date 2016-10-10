@@ -3,11 +3,11 @@
 
 #define	SCRWIDTH	1024
 #define SCRHEIGHT	768
-#define GRIDSIZE	32
+#define GRIDSIZE	16
 
 namespace Tmpl8 {
 
-#define MAXP1		 80				// increase to test your optimized code
+#define MAXP1		 200				// increase to test your optimized code
 #define MAXP2		 (4 * MAXP1)	// because the player is smarter than the AI
 #define MAXBULLET	200
 

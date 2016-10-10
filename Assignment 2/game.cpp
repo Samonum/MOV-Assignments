@@ -269,7 +269,6 @@ void Game::Init()
 	m_LButton = m_PrevButton = false;
 
 	SaveState();
-	LoadState();
 }
 
 // Game::DrawTanks - draw the tanks
@@ -322,6 +321,10 @@ void Game::PlayerInput()
 		m_Surface->Line( (float)m_MouseX, 0, (float)m_MouseX, SCRHEIGHT - 1, 0xffffff );
 	}
 	m_PrevButton = m_LButton;
+#else
+	if (m_LButton)
+		LoadState();
+			
 #endif
 }
 
@@ -329,18 +332,20 @@ void Game::SaveState()
 {
 	ofstream saveFile("save.state", ios::trunc);
 
+	saveFile << (MAXP1 + MAXP2) << "\n";
+
 	if (MAXP1 > 0)
 	{
 		Tank* t = m_Tank[0];
-		saveFile << t->target.x << " " << t->target.y << "\n";
+		saveFile << t->target.x << DELIMITER << t->target.y << "\n";
 
 		for (unsigned int i = 0; i < MAXP1; i++)
 		{
 			Tank* t = m_Tank[i];
 
-			saveFile << ((t->flags & Tank::ACTIVE) ? 1 : 0) << " ";
-			saveFile << t->pos.x << " " << t->pos.y << " ";
-			saveFile << t->speed.x << " " << t->speed.y << " ";
+			saveFile << ((t->flags & Tank::ACTIVE) ? 1 : 0) << DELIMITER;
+			saveFile << t->pos.x << DELIMITER << t->pos.y << DELIMITER;
+			saveFile << t->speed.x << DELIMITER << t->speed.y;
 			saveFile << "\n";
 		}
 	}
@@ -354,15 +359,15 @@ void Game::SaveState()
 	}
 
 	Tank* t2 = m_Tank[MAXP1];
-	saveFile << t2->target.x << " " << t2->target.y << "\n";
+	saveFile << t2->target.x << DELIMITER << t2->target.y << "\n";
 
-	for (unsigned int i = MAXP1; i < MAXP2; i++)
+	for (unsigned int i = MAXP1; i < MAXP1 + MAXP2; i++)
 	{
 		Tank* t = m_Tank[i];
 
-		saveFile << ((t->flags & Tank::ACTIVE) ? 1 : 0) << " ";
-		saveFile << t->pos.x << " " << t->pos.y << " ";
-		saveFile << t->speed.x << " " << t->speed.y << " ";
+		saveFile << ((t->flags & Tank::ACTIVE) ? 1 : 0) << DELIMITER;
+		saveFile << t->pos.x << DELIMITER << t->pos.y << DELIMITER;
+		saveFile << t->speed.x << DELIMITER << t->speed.y;
 		saveFile << "\n";
 	}
 
@@ -372,7 +377,11 @@ void Game::SaveState()
 void Game::LoadState() 
 {
 	ifstream loadFile ("save.state");
-
+	/*
+	std::string s = "scott>=tiger";
+	std::string delimiter = ">=";
+	std::string token = s.substr(0, s.find(delimiter)); // token is "scott"
+	*/
 	if (!loadFile.is_open())
 		return;
 
@@ -380,7 +389,18 @@ void Game::LoadState()
 	int teamFlag = 2;
 
 	if (getline(loadFile, line))
+		m_Tank = new Tank*[stoi(line)];
+
+	float2 bluTarget;
+	if (getline(loadFile, line))
+	{
 		cout << line << "\n";
+		string::size_type sz;
+		bluTarget.x = std::stof(line, &sz);
+		bluTarget.y = std::stof(line.substr(sz));
+	}
+
+	int i = 0;
 
 	while (getline(loadFile, line))
 	{
@@ -390,15 +410,68 @@ void Game::LoadState()
 			break;
 		}
 		cout << line << "\n";
+		Tank* t = m_Tank[i] = new Tank();
+
+		string::size_type sz;
+		string::size_type fullSize = 0;
+
+		t->flags |= std::stoi(line, &sz);
+		fullSize += sz;
+
+		float x1 = std::stof(line.substr(fullSize), &sz);
+		fullSize += sz;
+		float y1 = std::stof(line.substr(fullSize), &sz);
+		fullSize += sz;
+		t->pos = float2(x1, y1);
+		t->target = bluTarget;
+		float x2 = std::stof(line.substr(fullSize), &sz);
+		fullSize += sz;
+		float y2 = std::stof(line.substr(fullSize), &sz);
+		fullSize += sz;
+		t->speed = float2(x2, y2);
+		t->flags |= teamFlag;
+		t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
+		i++;
 	}
 
+	float2 redTarget;
 	if (getline(loadFile, line))
+	{
 		cout << line << "\n";
+		string::size_type sz;
+		redTarget.x = std::stof(line, &sz);
+		redTarget.y = std::stof(line.substr(sz));
+	}
 
 	while (getline(loadFile, line))
 	{
 		cout << line << "\n";
+		Tank* t = m_Tank[i] = new Tank();
+
+		string::size_type sz;
+		string::size_type fullSize = 0;
+
+		t->flags |= std::stoi(line, &sz);
+		fullSize += sz;
+
+		float x1 = std::stof(line.substr(fullSize), &sz);
+		fullSize += sz;
+		float y1 = std::stof(line.substr(fullSize), &sz);
+		fullSize += sz;
+		t->pos = float2(x1, y1);
+		t->target = redTarget;
+		float x2 = std::stof(line.substr(fullSize), &sz);
+		fullSize += sz;
+		float y2 = std::stof(line.substr(fullSize), &sz);
+		fullSize += sz;
+		t->speed = float2(x2, y2);
+		t->flags |= teamFlag;
+		t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
+		i++;
 	}
+
+	for (unsigned int i = 0; i < MAXBULLET; i++)
+		bullet[i].flags = 0;
 
 	loadFile.close();
 }

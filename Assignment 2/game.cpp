@@ -328,6 +328,15 @@ void Game::PlayerInput()
 #endif
 }
 
+void Tmpl8::Game::KeyDown(int a_Key)
+{
+}
+
+void Tmpl8::Game::KeyUp(int a_Key)
+{
+	SaveState();
+}
+
 void Game::SaveState()
 {
 	ofstream saveFile("save.state", ios::trunc);

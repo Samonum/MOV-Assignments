@@ -60,6 +60,8 @@ public:
 	void UpdateBullets();
 	void DrawTanks();
 	void PlayerInput();
+	void KeyDown(int a_Key);
+	void KeyUp(int a_Key);
 	void SaveState();
 	void LoadState();
 	void Tick( float a_DT );

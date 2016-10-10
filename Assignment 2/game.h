@@ -4,19 +4,27 @@
 #define	SCRWIDTH	1024
 #define SCRHEIGHT	768
 #define GRIDSIZE	16
+#define GRIDSTUFF	1024/GRIDSIZE
 
 namespace Tmpl8 {
 
-#define MAXP1		 200				// increase to test your optimized code
+#define MAXP1		 110				// increase to test your optimized code
 #define MAXP2		 (4 * MAXP1)	// because the player is smarter than the AI
 #define MAXBULLET	200
+#define DELIMITER   ' '
 
 __declspec(align(64)) struct GridCell
 {
 	short count = 0;
 	short index[31];
 	inline void add(short newindex) { index[count] = newindex; count++; };
-	inline void remove(short oldindex) { int i; while (index[i] != oldindex) i++; index[i] = index[--count]; };
+	inline void remove(short oldindex)
+	{
+		int i = 0; 
+		while (index[i] != oldindex) 
+			i++; 
+		index[i] = index[--count];
+	};
 };
 
 class Smoke
@@ -42,8 +50,8 @@ public:
 	float maxspeed;
 	int flags, reloading;
 	Smoke smoke;
-	inline int gridX() { return pos.x / GRIDSIZE; };
-	inline int gridY() { return pos.y / GRIDSIZE; };
+	inline int gridX() { return ((int)pos.x >> 5) & (GRIDSTUFF - 1); };
+	inline int gridY() { return ((int)pos.y >> 5) & (GRIDSTUFF - 1); };
 };
 
 class Bullet
@@ -65,11 +73,15 @@ public:
 	void SetTarget( Surface* a_Surface ) { m_Surface = a_Surface; }
 	void MouseMove( int x, int y ) { m_MouseX = x; m_MouseY = y; }
 	void MouseButton( bool b ) { m_LButton = b; }
-	void Init();
+	void Init(bool loadState);
 	void UpdateTanks();
 	void UpdateBullets();
 	void DrawTanks();
 	void PlayerInput();
+	void KeyDown(int a_Key);
+	void KeyUp(int a_Key);
+	void SaveState();
+	void LoadState();
 	void Tick( float a_DT );
 	Surface* m_Surface, *m_Backdrop, *m_Heights, *m_Grid;
 	Sprite* m_P1Sprite, *m_P2Sprite, *m_PXSprite, *m_Smoke;

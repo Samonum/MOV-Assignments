@@ -137,7 +137,7 @@ int main( int argc, char **argv )
 		SDL_RenderPresent( renderer );
 		if (firstframe)
 		{
-			game->Init();
+			game->Init(false);
 			firstframe = false;
 		}
 		// calculate frame time and pass it to game->Tick
@@ -153,7 +153,7 @@ int main( int argc, char **argv )
 			case SDL_QUIT:
 				exitapp = 1;
 				break;
-			/* case SDL_KEYDOWN:
+			 case SDL_KEYDOWN:
 				if (event.key.keysym.sym == SDLK_ESCAPE) 
 				{
 					exitapp = 1;
@@ -163,7 +163,7 @@ int main( int argc, char **argv )
 				break;
 			case SDL_KEYUP:
 				game->KeyUp( event.key.keysym.scancode );
-				break; */
+				break; 
 			case SDL_MOUSEMOTION:
 				game->MouseMove( event.motion.x, event.motion.y );
 				break;

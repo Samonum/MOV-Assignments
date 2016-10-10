@@ -111,9 +111,6 @@ void Tank::Fire( unsigned int party, float2& pos, float2& dir )
 // Tank::Tick - update single tank
 void Tank::Tick()
 {
-	int grid_x = this->gridX();
-	int grid_y = this->gridY();
-
 	if (!(flags & ACTIVE)) // dead tank
 	{
 		smoke.xpos = (int)pos.x;
@@ -143,19 +140,29 @@ void Tank::Tick()
 		}
 	}
 
+	int grid_x = this->gridX();
+	int grid_y = this->gridY();
+
 	// evade other tanks
-	for ( unsigned int i = 0; i < (MAXP1 + MAXP2); i++ )
-	{
-		if (game->m_Tank[i] == this) 
-			continue;
+	for (int i = -1; i < 2; i++)
+		for (int j = -1; j < 2; j++)
+		{
+			int curX = (grid_x + j) & GRIDMASK;
+			int curY = (grid_y + i) & GRIDMASK;
+			for (int k = 0; k < tankGrid[curY][curX].count; k++)
+			{
+				if (game->m_Tank[tankGrid[curY][curX].index[k]] == this)
+					continue;
 
-		float2 d = pos - game->m_Tank[i]->pos;
+				float2 d = pos - game->m_Tank[tankGrid[curY][curX].index[k]]->pos;
 
-		if (length( d ) < 8) 
-			force += normalize( d ) * 2.0f;
-		else if (length( d ) < 16) 
-			force += normalize( d ) * 0.4f;
-	}
+				if (length(d) < 8)
+					force += normalize(d) * 2.0f;
+				else if (length(d) < 16)
+					force += normalize(d) * 0.4f;
+
+			}
+		}
 
 	// evade user dragged line
 	if ((flags & P1) && (game->m_LButton))
@@ -181,6 +188,13 @@ void Tank::Tick()
 	speed += force;
 	speed = normalize(speed);
 	pos += speed * maxspeed * 0.5f;
+	int newGridX = gridX();
+	int newGridY = gridY();
+	if (newGridX != grid_x || newGridY != grid_y)
+	{
+		tankGrid[grid_y][grid_x].remove(id);
+		tankGrid[newGridY][newGridX].add(id);
+	}
 
 	// shoot, if reloading completed
 	if (--reloading >= 0) 
@@ -259,6 +273,7 @@ void Game::Init(bool loadState)
 			t->speed = float2(0, 0);
 			t->flags = Tank::ACTIVE | Tank::P1;
 			t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
+			t->id = i;
 			tankGrid[t->gridY()][t->gridX()].add(i);
 		}
 
@@ -272,7 +287,8 @@ void Game::Init(bool loadState)
 			t->speed = float2(0, 0);
 			t->flags = Tank::ACTIVE | Tank::P2;
 			t->maxspeed = 0.3f;
-			tankGrid[t->gridY()][t->gridX()].add(i+MAXP2);
+			t->id = i + MAXP1;
+			tankGrid[t->gridY()][t->gridX()].add(i+MAXP1);
 		}
 	}
 	else

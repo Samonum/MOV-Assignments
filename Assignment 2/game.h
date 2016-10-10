@@ -5,18 +5,19 @@
 #define SCRHEIGHT	768
 #define GRIDSIZE	16
 #define GRIDSTUFF	1024/GRIDSIZE
+#define GRIDMASK	GRIDSTUFF - 1
 
 namespace Tmpl8 {
 
-#define MAXP1		 110				// increase to test your optimized code
+#define MAXP1		 200				// increase to test your optimized code
 #define MAXP2		 (4 * MAXP1)	// because the player is smarter than the AI
 #define MAXBULLET	200
 #define DELIMITER   ' '
 
 __declspec(align(64)) struct GridCell
 {
-	short count = 0;
-	short index[31];
+	unsigned short count = 0;
+	unsigned short index[31];
 	inline void add(short newindex) { index[count] = newindex; count++; };
 	inline void remove(short oldindex)
 	{
@@ -49,6 +50,7 @@ public:
 	float2 pos, speed, target;
 	float maxspeed;
 	int flags, reloading;
+	unsigned short id;
 	Smoke smoke;
 	inline int gridX() { return ((int)pos.x >> 5) & (GRIDSTUFF - 1); };
 	inline int gridY() { return ((int)pos.y >> 5) & (GRIDSTUFF - 1); };

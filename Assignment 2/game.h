@@ -59,6 +59,8 @@ public:
 	void UpdateBullets();
 	void DrawTanks();
 	void PlayerInput();
+	void SaveState();
+	void LoadState();
 	void Tick( float a_DT );
 	Surface* m_Surface, *m_Backdrop, *m_Heights, *m_Grid;
 	Sprite* m_P1Sprite, *m_P2Sprite, *m_PXSprite, *m_Smoke;

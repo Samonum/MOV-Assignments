@@ -1,4 +1,7 @@
 #include "template.h"
+#include <iostream>
+#include <fstream>
+#include <string>
 
 #define DEV
 
@@ -246,7 +249,9 @@ void Game::Init()
 		Tank* t = m_Tank[i] = new Tank();
 		t->pos = float2( (float)((i % 5) * 20), (float)((i / 5) * 20 + 50) );
 		t->target = float2( SCRWIDTH, SCRHEIGHT ); // initially move to bottom right corner
-		t->speed = float2( 0, 0 ), t->flags = Tank::ACTIVE|Tank::P1, t->maxspeed = (i < (MAXP1 / 2))?0.65f:0.45f;
+		t->speed = float2(0, 0);
+		t->flags = Tank::ACTIVE | Tank::P1;
+		t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
 	}
 
 	// create red tanks
@@ -255,11 +260,16 @@ void Game::Init()
 		Tank* t = m_Tank[i + MAXP1] = new Tank();
 		t->pos = float2( (float)((i % 12) * 20 + 900), (float)((i / 12) * 20 + 600) );
 		t->target = float2( 424, 336 ); // move to player base
-		t->speed = float2( 0, 0 ), t->flags = Tank::ACTIVE|Tank::P2, t->maxspeed = 0.3f;
+		t->speed = float2(0, 0);
+		t->flags = Tank::ACTIVE | Tank::P2;
+		t->maxspeed = 0.3f;
 	}
 
 	game = this; // for global reference
 	m_LButton = m_PrevButton = false;
+
+	SaveState();
+	LoadState();
 }
 
 // Game::DrawTanks - draw the tanks
@@ -313,6 +323,84 @@ void Game::PlayerInput()
 	}
 	m_PrevButton = m_LButton;
 #endif
+}
+
+void Game::SaveState()
+{
+	ofstream saveFile("save.state", ios::trunc);
+
+	if (MAXP1 > 0)
+	{
+		Tank* t = m_Tank[0];
+		saveFile << t->target.x << " " << t->target.y << "\n";
+
+		for (unsigned int i = 0; i < MAXP1; i++)
+		{
+			Tank* t = m_Tank[i];
+
+			saveFile << ((t->flags & Tank::ACTIVE) ? 1 : 0) << " ";
+			saveFile << t->pos.x << " " << t->pos.y << " ";
+			saveFile << t->speed.x << " " << t->speed.y << " ";
+			saveFile << "\n";
+		}
+	}
+
+	saveFile << "-\n";
+
+	if (MAXP2 <= 0)
+	{
+		saveFile.close();
+		return;
+	}
+
+	Tank* t2 = m_Tank[MAXP1];
+	saveFile << t2->target.x << " " << t2->target.y << "\n";
+
+	for (unsigned int i = MAXP1; i < MAXP2; i++)
+	{
+		Tank* t = m_Tank[i];
+
+		saveFile << ((t->flags & Tank::ACTIVE) ? 1 : 0) << " ";
+		saveFile << t->pos.x << " " << t->pos.y << " ";
+		saveFile << t->speed.x << " " << t->speed.y << " ";
+		saveFile << "\n";
+	}
+
+	saveFile.close();
+}
+
+void Game::LoadState() 
+{
+	ifstream loadFile ("save.state");
+
+	if (!loadFile.is_open())
+		return;
+
+	string line;
+	int teamFlag = 2;
+
+	if (getline(loadFile, line))
+		cout << line << "\n";
+
+	while (getline(loadFile, line))
+	{
+		if (line == "-")
+		{
+			teamFlag = 4;
+			break;
+		}
+		cout << line << "\n";
+	}
+
+	if (getline(loadFile, line))
+		cout << line << "\n";
+
+	while (getline(loadFile, line))
+	{
+		cout << line << "\n";
+	}
+
+	loadFile.close();
 }
 
 // Game::Tick - main game loop

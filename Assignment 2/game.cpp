@@ -14,6 +14,7 @@ static float peakh[16] = { 200, 150, 160, 255, 200, 255, 200, 300, 120, 100,  80
 static int aliveP1 = MAXP1;
 static int aliveP2 = MAXP2;
 static Bullet bullet[MAXBULLET];
+static GridCell tankGrid[SCRHEIGHT / GRIDSIZE][SCRWIDTH / GRIDSIZE];
 
 // smoke particle effect tick function
 void Smoke::Tick()
@@ -107,6 +108,9 @@ void Tank::Fire( unsigned int party, float2& pos, float2& dir )
 // Tank::Tick - update single tank
 void Tank::Tick()
 {
+	int grid_x = this->gridX();
+	int grid_y = this->gridY();
+
 	if (!(flags & ACTIVE)) // dead tank
 	{
 		smoke.xpos = (int)pos.x;
@@ -171,7 +175,9 @@ void Tank::Tick()
 	}
 
 	// update speed using accumulated force
-	speed += force, speed = normalize( speed ), pos += speed * maxspeed * 0.5f;
+	speed += force;
+	speed = normalize(speed);
+	pos += speed * maxspeed * 0.5f;
 
 	// shoot, if reloading completed
 	if (--reloading >= 0) 
@@ -247,6 +253,8 @@ void Game::Init()
 		t->pos = float2( (float)((i % 5) * 20), (float)((i / 5) * 20 + 50) );
 		t->target = float2( SCRWIDTH, SCRHEIGHT ); // initially move to bottom right corner
 		t->speed = float2( 0, 0 ), t->flags = Tank::ACTIVE|Tank::P1, t->maxspeed = (i < (MAXP1 / 2))?0.65f:0.45f;
+		//if(t->gridY() < SCRHEIGHT && t->gridX() < SCRWIDTH)
+		//	tankGrid[t->gridY()][t->gridX()].add(i);
 	}
 
 	// create red tanks
@@ -256,6 +264,8 @@ void Game::Init()
 		t->pos = float2( (float)((i % 12) * 20 + 900), (float)((i / 12) * 20 + 600) );
 		t->target = float2( 424, 336 ); // move to player base
 		t->speed = float2( 0, 0 ), t->flags = Tank::ACTIVE|Tank::P2, t->maxspeed = 0.3f;
+		//if (t->gridY() < SCRHEIGHT && t->gridX() < SCRWIDTH)
+		//	tankGrid[t->gridY()][t->gridX()].add(i + MAXP1);
 	}
 
 	game = this; // for global reference

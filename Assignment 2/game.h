@@ -3,12 +3,21 @@
 
 #define	SCRWIDTH	1024
 #define SCRHEIGHT	768
+#define GRIDSIZE	32
 
 namespace Tmpl8 {
 
 #define MAXP1		 80				// increase to test your optimized code
 #define MAXP2		 (4 * MAXP1)	// because the player is smarter than the AI
 #define MAXBULLET	200
+
+__declspec(align(64)) struct GridCell
+{
+	short count = 0;
+	short index[31];
+	inline void add(short newindex) { index[count] = newindex; count++; };
+	inline void remove(short oldindex) { int i; while (index[i] != oldindex) i++; index[i] = index[--count]; };
+};
 
 class Smoke
 {
@@ -33,6 +42,8 @@ public:
 	float maxspeed;
 	int flags, reloading;
 	Smoke smoke;
+	inline int gridX() { return pos.x / GRIDSIZE; };
+	inline int gridY() { return pos.y / GRIDSIZE; };
 };
 
 class Bullet

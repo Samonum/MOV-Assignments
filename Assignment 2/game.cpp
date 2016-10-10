@@ -3,7 +3,7 @@
 #include <fstream>
 #include <string>
 
-#define DEV
+#define DEVa
 
 // global data (source scope)
 static Game* game;
@@ -334,7 +334,10 @@ void Tmpl8::Game::KeyDown(int a_Key)
 
 void Tmpl8::Game::KeyUp(int a_Key)
 {
-	SaveState();
+	if (a_Key == 22)
+		SaveState();
+	else if (a_Key == 15)
+		LoadState();
 }
 
 void Game::SaveState()

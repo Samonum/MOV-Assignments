@@ -209,16 +209,28 @@ void Tank::Tick()
 		end = MAXP1 + MAXP2;
 	}
 
-	for ( unsigned int i = start; i < end; i++ ) 
-		if (game->m_Tank[i]->flags & ACTIVE)
+	for (int i = -7; i < 7; i++)
+		for (int j = -7; j < 7; j++)
 		{
-			float2 d = game->m_Tank[i]->pos - pos;
+			int curX = (newGridX + j) & GRIDMASK;
+			int curY = (newGridY + i) & GRIDMASK;
+			int count = tankGrid[curY][curX].count;
 
-			if ((length(d) < 100) && (dot(normalize(d), speed) > 0.99999f))
+			for (int k = 0; k<count; k++)
 			{
-				Fire(flags & (P1 | P2), pos, speed); // shoot
-				reloading = 200; // and wait before next shot is ready
-				break;
+				Tank* target = game->m_Tank[tankGrid[curY][curX].index[k]];
+
+				if ((target->flags & ACTIVE) && ((target->flags & (P1 | P2)) ^ (flags & (P1 | P2))))
+				{
+					float2 d = target->pos - pos;
+
+					if ((length(d) < 100) && (dot(normalize(d), speed) > 0.99999f))
+					{
+						Fire(flags & (P1 | P2), pos, speed); // shoot
+						reloading = 200; // and wait before next shot is ready
+						break;
+					}
+				}
 			}
 		}
 }

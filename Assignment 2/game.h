@@ -17,7 +17,7 @@ namespace Tmpl8 {
 __declspec(align(64)) struct GridCell
 {
 	unsigned short count = 0;
-	unsigned short index[31];
+	unsigned short index[63];
 	inline void add(short newindex) { index[count] = newindex; count++; };
 	inline void remove(short oldindex)
 	{

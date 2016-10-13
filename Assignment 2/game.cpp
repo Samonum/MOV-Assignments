@@ -18,6 +18,7 @@ static int aliveP1 = MAXP1;
 static int aliveP2 = MAXP2;
 static Bullet bullet[MAXBULLET];
 static GridCell tankGrid[GRIDSTUFF][GRIDSTUFF];
+static GridCell teamGrid[2][GRIDSTUFF][GRIDSTUFF];
 
 // smoke particle effect tick function
 void Smoke::Tick()
@@ -90,6 +91,7 @@ void Bullet::Tick()
 			aliveP2--; 
 
 		t->flags &= Tank::P1|Tank::P2;	// kill tank
+		teamGrid[1 ^ (t->flags >> 2)][t->gridY()][t->gridX()].remove(t->id);
 		flags = 0;						// destroy bullet
 		break;
 	}
@@ -194,6 +196,8 @@ void Tank::Tick()
 	{
 		tankGrid[grid_y][grid_x].remove(id);
 		tankGrid[newGridY][newGridX].add(id);
+		teamGrid[1 ^ (flags >> 2)][grid_y][grid_x].remove(id);
+		teamGrid[1 ^ (flags >> 2)][newGridY][newGridX].add(id);
 	}
 
 	// shoot, if reloading completed
@@ -214,22 +218,18 @@ void Tank::Tick()
 		{
 			int curX = (newGridX + j) & GRIDMASK;
 			int curY = (newGridY + i) & GRIDMASK;
-			int count = tankGrid[curY][curX].count;
+			int count = teamGrid[flags>>2][curY][curX].count;
 
 			for (int k = 0; k<count; k++)
 			{
-				Tank* target = game->m_Tank[tankGrid[curY][curX].index[k]];
+				Tank* target = game->m_Tank[teamGrid[flags>>2][curY][curX].index[k]];
+				float2 d = target->pos - pos;
 
-				if ((target->flags & ACTIVE) && ((target->flags & (P1 | P2)) ^ (flags & (P1 | P2))))
+				if ((length(d) < 100) && (dot(normalize(d), speed) > 0.99999f))
 				{
-					float2 d = target->pos - pos;
-
-					if ((length(d) < 100) && (dot(normalize(d), speed) > 0.99999f))
-					{
-						Fire(flags & (P1 | P2), pos, speed); // shoot
-						reloading = 200; // and wait before next shot is ready
-						break;
-					}
+					Fire(flags & (P1 | P2), pos, speed); // shoot
+					reloading = 200; // and wait before next shot is ready
+					break;
 				}
 			}
 		}
@@ -287,6 +287,7 @@ void Game::Init(bool loadState)
 			t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
 			t->id = i;
 			tankGrid[t->gridY()][t->gridX()].add(i);
+			teamGrid[1][t->gridY()][t->gridX()].add(i);
 		}
 
 
@@ -301,6 +302,7 @@ void Game::Init(bool loadState)
 			t->maxspeed = 0.3f;
 			t->id = i + MAXP1;
 			tankGrid[t->gridY()][t->gridX()].add(i+MAXP1);
+			teamGrid[0][t->gridY()][t->gridX()].add(i+MAXP1);
 		}
 	}
 	else

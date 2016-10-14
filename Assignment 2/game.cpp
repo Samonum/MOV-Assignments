@@ -19,6 +19,8 @@ static int aliveP2 = MAXP2;
 static Bullet bullet[MAXBULLET];
 static GridCell tankGrid[GRIDSTUFF][GRIDSTUFF];
 static GridCell teamGrid[2][GRIDSTUFF][GRIDSTUFF];
+static float sinTable[720];
+static float cosTable[720];
 
 // smoke particle effect tick function
 void Smoke::Tick()
@@ -135,8 +137,8 @@ void Tank::Tick()
 
 			for( int j = 0; j < 720; j++ )
 			{
-				float x = peakx[i] + r * sinf( (float)j * PI / 360.0f );
-				float y = peaky[i] + r * cosf( (float)j * PI / 360.0f );
+				float x = peakx[i] + r * sinTable[j];
+				float y = peaky[i] + r * cosTable[j];
 				game->m_Surface->AddPlot( (int)x, (int)y, 0x000500 );
 			}
 		}
@@ -268,6 +270,11 @@ void Game::Init(bool loadState)
 			a2[idx] = AddBlend(a1[u + v * 1024], ScaleColor(ScaleColor(0x33aa11, r) + ScaleColor(0xffff00, (255 - r)), (int)(max(0.0f, dt) * 80.0f) + 10));
 		}
 
+	for (int i = 0; i < 720; i++)
+	{
+		sinTable[i] = sinf((float)i * PI / 360.0f);
+		cosTable[i] = sinf((float)i * PI / 360.0f);
+	}
 	m_P1Sprite = new Sprite( new Surface( "testdata/p1tank.tga" ), 1, Sprite::FLARE );
 	m_P2Sprite = new Sprite( new Surface( "testdata/p2tank.tga" ), 1, Sprite::FLARE );
 	m_PXSprite = new Sprite( new Surface( "testdata/deadtank.tga" ), 1, Sprite::BLACKFLARE );

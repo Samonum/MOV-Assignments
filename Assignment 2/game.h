@@ -9,8 +9,8 @@
 
 namespace Tmpl8 {
 
-#define MAXP1		 200				// increase to test your optimized code
-#define MAXP2		 (4 * MAXP1)	// because the player is smarter than the AI
+#define MAXP1		200				// increase to test your optimized code
+#define MAXP2		(4 * MAXP1)	// because the player is smarter than the AI
 #define MAXBULLET	200
 #define DELIMITER   ' '
 

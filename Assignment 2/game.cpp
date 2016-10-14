@@ -134,7 +134,7 @@ void Tank::Tick()
 		{
 			force += d * 0.03f * (peakh[i] / sd);
 			float r = sqrtf( sd );
-
+			
 			for( int j = 0; j < 720; j++ )
 			{
 				float x = peakx[i] + r * sinTable[j];
@@ -160,9 +160,11 @@ void Tank::Tick()
 
 				float2 d = pos - game->m_Tank[tankGrid[curY][curX].index[k]]->pos;
 
-				if (length(d) < 8)
+				float squaredLength = d.x*d.x + d.y*d.y;
+
+				if (squaredLength < 64)
 					force += normalize(d) * 2.0f;
-				else if (length(d) < 16)
+				else if (squaredLength < 256)
 					force += normalize(d) * 0.4f;
 
 			}

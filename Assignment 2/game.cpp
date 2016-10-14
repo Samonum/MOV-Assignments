@@ -273,7 +273,7 @@ void Game::Init(bool loadState)
 	for (int i = 0; i < 720; i++)
 	{
 		sinTable[i] = sinf((float)i * PI / 360.0f);
-		cosTable[i] = sinf((float)i * PI / 360.0f);
+		cosTable[i] = cosf((float)i * PI / 360.0f);
 	}
 	m_P1Sprite = new Sprite( new Surface( "testdata/p1tank.tga" ), 1, Sprite::FLARE );
 	m_P2Sprite = new Sprite( new Surface( "testdata/p2tank.tga" ), 1, Sprite::FLARE );

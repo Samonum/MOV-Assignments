@@ -9,7 +9,7 @@
 
 namespace Tmpl8 {
 
-#define MAXP1		200				// increase to test your optimized code
+#define MAXP1		2000				// increase to test your optimized code
 #define MAXP2		(4 * MAXP1)	// because the player is smarter than the AI
 #define MAXBULLET	200
 #define DELIMITER   ' '
@@ -29,11 +29,11 @@ class Tank
 {
 public:
 	enum { ACTIVE = 1, P1 = 2, P2 = 4 };
-	Tank() : pos( float2( 0, 0 ) ), speed( float2( 0, 0 ) ), target( float2( 0, 0 ) ), reloading( 0 ) {};
+	Tank() : pos( float2( 0, 0 ) ), dir( float2( 0, 0 ) ), target( float2( 0, 0 ) ), reloading( 0 ) {};
 	~Tank();
 	void Fire( unsigned int party, float2& pos, float2& dir );
 	void Tick();
-	float2 pos, speed, target;
+	float2 pos, dir, target;
 	float maxspeed;
 	int flags, reloading;
 	unsigned short id;

@@ -107,7 +107,7 @@ void Tank::Fire( unsigned int party, float2& pos, float2& dir )
 		{
 			bullet[i].flags |= Bullet::ACTIVE + party; // set owner, set active
 			bullet[i].pos = pos;
-			bullet[i].speed = speed;
+			bullet[i].speed = dir;
 			break;
 		}
 }
@@ -190,9 +190,9 @@ void Tank::Tick()
 	}
 
 	// update speed using accumulated force
-	speed += force;
-	speed = normalize(speed);
-	pos += speed * maxspeed * 0.5f;
+	dir += force;
+	dir = normalize(dir);
+	pos += dir * maxspeed * 0.5f;
 	int newGridX = gridX();
 	int newGridY = gridY();
 	if (newGridX != grid_x || newGridY != grid_y)
@@ -216,8 +216,13 @@ void Tank::Tick()
 		end = MAXP1 + MAXP2;
 	}
 
-	for (int i = -7; i < 7; i++)
-		for (int j = -7; j < 7; j++)
+	int hstart = -7 * (dir.x < -0.1);
+	int hend = 7 * (dir.x > 0.1);
+	int vstart = -7 * (dir.y < -0.1);
+	int vend = 7 * (dir.y > 0.1);
+
+	for (int i = vstart; i <= vend; i++)
+		for (int j = hstart; j <= hend; j++)
 		{
 			int curX = (newGridX + j) & GRIDMASK;
 			int curY = (newGridY + i) & GRIDMASK;
@@ -227,12 +232,13 @@ void Tank::Tick()
 			{
 				Tank* target = teamGrid[flags>>2][curY][curX].getTank(k);
 				float2 d = target->pos - pos;
+				float sqleng = d.x*d.x + d.y*d.y;
 
-				if ((length(d) < 100) && (dot(normalize(d), speed) > 0.99999f))
+				if ((sqleng < 10000) && (dot(normalize(d), dir) > 0.99999f))
 				{
-					Fire(flags & (P1 | P2), pos, speed); // shoot
+					Fire(flags & (P1 | P2), pos, dir); // shoot
 					reloading = 200; // and wait before next shot is ready
-					break;
+					return;
 				}
 			}
 		}
@@ -290,7 +296,7 @@ void Game::Init(bool loadState)
 			Tank* t = m_Tank[i] = new Tank();
 			t->pos = float2((float)((i % 5) * 20), (float)((i / 5) * 20 + 50));
 			t->target = float2(SCRWIDTH, SCRHEIGHT); // initially move to bottom right corner
-			t->speed = float2(0, 0);
+			t->dir = float2(0, 0);
 			t->flags = Tank::ACTIVE | Tank::P1;
 			t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
 			t->id = i;
@@ -305,7 +311,7 @@ void Game::Init(bool loadState)
 			Tank* t = m_Tank[i + MAXP1] = new Tank();
 			t->pos = float2((float)((i % 12) * 20 + 900), (float)((i / 12) * 20 + 600));
 			t->target = float2(424, 336); // move to player base
-			t->speed = float2(0, 0);
+			t->dir = float2(0, 0);
 			t->flags = Tank::ACTIVE | Tank::P2;
 			t->maxspeed = 0.3f;
 			t->id = i + MAXP1;
@@ -362,7 +368,7 @@ void Game::Init(bool loadState)
 			fullSize += sz;
 			float y2 = std::stof(line.substr(fullSize), &sz);
 			fullSize += sz;
-			t->speed = float2(x2, y2);
+			t->dir = float2(x2, y2);
 			t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
 			i++;
 
@@ -396,7 +402,7 @@ void Game::Init(bool loadState)
 			fullSize += sz;
 			float y2 = std::stof(line.substr(fullSize), &sz);
 			fullSize += sz;
-			t->speed = float2(x2, y2);
+			t->dir = float2(x2, y2);
 			t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
 			i++;
 		}
@@ -421,20 +427,20 @@ void Game::DrawTanks()
 	{
 		Tank* t = m_Tank[i];
 		float x = t->pos.x, y = t->pos.y;
-		float2 p1( x + 70 * t->speed.x + 22 * t->speed.y, y + 70 * t->speed.y - 22 * t->speed.x );
-		float2 p2( x + 70 * t->speed.x - 22 * t->speed.y, y + 70 * t->speed.y + 22 * t->speed.x );
+		float2 p1( x + 70 * t->dir.x + 22 * t->dir.y, y + 70 * t->dir.y - 22 * t->dir.x );
+		float2 p2( x + 70 * t->dir.x - 22 * t->dir.y, y + 70 * t->dir.y + 22 * t->dir.x );
 
 		if (!(m_Tank[i]->flags & Tank::ACTIVE)) 
 			m_PXSprite->Draw( (int)x - 4, (int)y - 4, m_Surface ); // draw dead tank
 		else if (t->flags & Tank::P1) // draw blue tank
 		{
 			m_P1Sprite->Draw( (int)x - 4, (int)y - 4, m_Surface );
-			m_Surface->Line( x, y, x + 8 * t->speed.x, y + 8 * t->speed.y, 0x4444ff );
+			m_Surface->Line( x, y, x + 8 * t->dir.x, y + 8 * t->dir.y, 0x4444ff );
 		}
 		else // draw red tank
 		{
 			m_P2Sprite->Draw( (int)x - 4, (int)y - 4, m_Surface );
-			m_Surface->Line( x, y, x + 8 * t->speed.x, y + 8 * t->speed.y, 0xff4444 );
+			m_Surface->Line( x, y, x + 8 * t->dir.x, y + 8 * t->dir.y, 0xff4444 );
 		}
 
 		if ((x >= 0) && (x < SCRWIDTH) && (y >= 0) && (y < SCRHEIGHT))
@@ -496,7 +502,7 @@ void Game::SaveState()
 
 			saveFile << t->flags << DELIMITER;
 			saveFile << t->pos.x << DELIMITER << t->pos.y << DELIMITER;
-			saveFile << t->speed.x << DELIMITER << t->speed.y;
+			saveFile << t->dir.x << DELIMITER << t->dir.y;
 			saveFile << "\n";
 		}
 	}
@@ -518,7 +524,7 @@ void Game::SaveState()
 
 		saveFile << t->flags << DELIMITER;
 		saveFile << t->pos.x << DELIMITER << t->pos.y << DELIMITER;
-		saveFile << t->speed.x << DELIMITER << t->speed.y;
+		saveFile << t->dir.x << DELIMITER << t->dir.y;
 		saveFile << "\n";
 	}
 

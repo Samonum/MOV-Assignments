@@ -93,7 +93,7 @@ void Bullet::Tick()
 			aliveP2--; 
 
 		t->flags &= Tank::P1|Tank::P2;	// kill tank
-		teamGrid[1 ^ (t->flags >> 2)][t->gridY()][t->gridX()].remove(t->id);
+		teamGrid[1 ^ (t->flags >> 2)][t->gridY()][t->gridX()].remove(t);
 		flags = 0;						// destroy bullet
 		break;
 	}
@@ -155,10 +155,10 @@ void Tank::Tick()
 			int curY = (grid_y + i) & GRIDMASK;
 			for (int k = 0; k < tankGrid[curY][curX].count; k++)
 			{
-				if (game->m_Tank[tankGrid[curY][curX].index[k]] == this)
+				if (tankGrid[curY][curX].getTank(k) == this)
 					continue;
 
-				float2 d = pos - game->m_Tank[tankGrid[curY][curX].index[k]]->pos;
+				float2 d = pos - tankGrid[curY][curX].getTank(k)->pos;
 
 				float squaredLength = d.x*d.x + d.y*d.y;
 
@@ -166,7 +166,6 @@ void Tank::Tick()
 					force += normalize(d) * 2.0f;
 				else if (squaredLength < 256)
 					force += normalize(d) * 0.4f;
-
 			}
 		}
 
@@ -198,10 +197,10 @@ void Tank::Tick()
 	int newGridY = gridY();
 	if (newGridX != grid_x || newGridY != grid_y)
 	{
-		tankGrid[grid_y][grid_x].remove(id);
-		tankGrid[newGridY][newGridX].add(id);
-		teamGrid[1 ^ (flags >> 2)][grid_y][grid_x].remove(id);
-		teamGrid[1 ^ (flags >> 2)][newGridY][newGridX].add(id);
+		tankGrid[grid_y][grid_x].remove(this);
+		tankGrid[newGridY][newGridX].add(this);
+		teamGrid[1 ^ (flags >> 2)][grid_y][grid_x].remove(this);
+		teamGrid[1 ^ (flags >> 2)][newGridY][newGridX].add(this);
 	}
 
 	// shoot, if reloading completed
@@ -226,7 +225,7 @@ void Tank::Tick()
 
 			for (int k = 0; k<count; k++)
 			{
-				Tank* target = game->m_Tank[teamGrid[flags>>2][curY][curX].index[k]];
+				Tank* target = teamGrid[flags>>2][curY][curX].getTank(k);
 				float2 d = target->pos - pos;
 
 				if ((length(d) < 100) && (dot(normalize(d), speed) > 0.99999f))
@@ -295,8 +294,8 @@ void Game::Init(bool loadState)
 			t->flags = Tank::ACTIVE | Tank::P1;
 			t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
 			t->id = i;
-			tankGrid[t->gridY()][t->gridX()].add(i);
-			teamGrid[1][t->gridY()][t->gridX()].add(i);
+			tankGrid[t->gridY()][t->gridX()].add(t);
+			teamGrid[1][t->gridY()][t->gridX()].add(t);
 		}
 
 
@@ -310,8 +309,8 @@ void Game::Init(bool loadState)
 			t->flags = Tank::ACTIVE | Tank::P2;
 			t->maxspeed = 0.3f;
 			t->id = i + MAXP1;
-			tankGrid[t->gridY()][t->gridX()].add(i+MAXP1);
-			teamGrid[0][t->gridY()][t->gridX()].add(i+MAXP1);
+			tankGrid[t->gridY()][t->gridX()].add(t);
+			teamGrid[0][t->gridY()][t->gridX()].add(t);
 		}
 	}
 	else

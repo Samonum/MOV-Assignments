@@ -9,24 +9,10 @@
 
 namespace Tmpl8 {
 
-#define MAXP1		2400				// increase to test your optimized code
+#define MAXP1		200				// increase to test your optimized code
 #define MAXP2		(4 * MAXP1)	// because the player is smarter than the AI
 #define MAXBULLET	200
 #define DELIMITER   ' '
-
-__declspec(align(64)) struct GridCell
-{
-	unsigned short count = 0;
-	unsigned short index[63];
-	inline void add(short newindex) { index[count] = newindex; count++; };
-	inline void remove(short oldindex)
-	{
-		int i = 0; 
-		while (index[i] != oldindex) 
-			i++; 
-		index[i] = index[--count];
-	};
-};
 
 class Smoke
 {
@@ -91,6 +77,24 @@ public:
 	int m_MouseX, m_MouseY, m_DStartX, m_DStartY, m_DFrames;
 	bool m_LButton, m_PrevButton;
 	Tank** m_Tank;
+};
+
+__declspec(align(64)) struct GridCell
+{
+	unsigned int count = 0;
+	unsigned int index[63];
+	inline void add(Tank* newindex) { index[count] = reinterpret_cast<int>(newindex); count++; };
+	inline void remove(Tank* oldindex)
+	{
+		int i = 0;
+		while (index[i] != reinterpret_cast<int>(oldindex))
+			i++;
+		index[i] = index[--count];
+	};
+	inline Tank* getTank(int i)
+	{
+		return reinterpret_cast<Tank*>(index[i]);
+	}
 };
 
 }; // namespace Templ8

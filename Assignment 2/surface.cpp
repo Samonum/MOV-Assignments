@@ -216,6 +216,20 @@ void Surface::Bar( int x1, int y1, int x2, int y2, Pixel c )
 	}
 }
 
+void Surface::HalfScale(Surface* a_Dst)
+{
+	Pixel* dst = a_Dst->GetBuffer();
+	Pixel* src = m_Buffer;
+	const uint mask = 0x00ff00;
+	const int invmask = ~mask;
+	for(int i = 0; i < m_Height; i+=2)
+		for (int j = 0; j < m_Width; j += 2)
+		{
+			dst[(i*m_Width) / 4 + j / 2] = mask&(((mask&src[(i*m_Width) + j]) + (mask&src[(i + 1)*m_Width + j]) + (mask&src[(i*m_Width) + 1 + j]) + (mask&src[(1 + i)*m_Width + 1 + j])) / 4);
+			dst[(i*m_Width) / 4 + j / 2] |= ~mask&(((~mask&src[(i*m_Width) + j]) + (~mask&src[(i + 1)*m_Width + j]) + (~mask&src[(i*m_Width) + 1 + j]) + (~mask&src[(1 + i)*m_Width + 1 + j])) / 4);
+		}
+}
+
 void Surface::CopyTo( Surface* a_Dst, int a_X, int a_Y )
 {
 	Pixel* dst = a_Dst->GetBuffer();

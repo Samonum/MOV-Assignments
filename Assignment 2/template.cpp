@@ -105,30 +105,32 @@ int main( int argc, char **argv )
 	redirectIO();
 	printf( "application started.\n" );
 	SDL_Init( SDL_INIT_VIDEO );
-	surface = new Surface( SCRWIDTH, SCRHEIGHT );
+	surface = new Surface(SCRWIDTH / 2, SCRHEIGHT / 2);
+	Surface* gamesurface = new Surface(SCRWIDTH, SCRHEIGHT);
 	surface->Clear( 0 );
-	surface->InitCharset();
-	SDL_Window* window = SDL_CreateWindow( "Template", 100, 100, SCRWIDTH, SCRHEIGHT, SDL_WINDOW_SHOWN );
+	gamesurface->InitCharset();
+	SDL_Window* window = SDL_CreateWindow( "Template", 100, 100, SCRWIDTH/2, SCRHEIGHT/2, SDL_WINDOW_SHOWN );
 	SDL_Renderer* renderer = SDL_CreateRenderer( window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
-	SDL_Texture* frameBuffer = SDL_CreateTexture( renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCRWIDTH, SCRHEIGHT );
+	SDL_Texture* frameBuffer = SDL_CreateTexture( renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCRWIDTH/2, SCRHEIGHT/2 );
 	int exitapp = 0;
 	game = new Game();
-	game->SetTarget( surface );
+	game->SetTarget(gamesurface);
 	while (!exitapp) 
 	{
+		gamesurface->HalfScale(surface);
 		void* target = 0;
 		int pitch;
 		SDL_LockTexture( frameBuffer, NULL, &target, &pitch );
 		if (pitch == (surface->GetWidth() * 4))
 		{
-			memcpy( target, surface->GetBuffer(), SCRWIDTH * SCRHEIGHT * 4 );
+			memcpy( target, surface->GetBuffer(), SCRWIDTH * SCRHEIGHT );
 		}
 		else
 		{
 			unsigned char* t = (unsigned char*)target;
-			for( int i = 0; i < SCRHEIGHT; i++ )
+			for( int i = 0; i < SCRHEIGHT/2; i++ )
 			{
-				memcpy( t, surface->GetBuffer() + i * SCRWIDTH, SCRWIDTH * 4 );
+				memcpy( t, surface->GetBuffer() + i * SCRWIDTH, SCRWIDTH );
 				t += pitch;
 			}
 		}

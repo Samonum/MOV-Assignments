@@ -64,7 +64,11 @@ class Game
 {
 public:
 	void SetTarget( Surface* a_Surface ) { m_Surface = a_Surface; }
-	void MouseMove( int x, int y ) { m_MouseX = x; m_MouseY = y; }
+	void MouseMove( int x, int y ) 
+	{ 
+		m_MouseX = x*2; 
+		m_MouseY = y*2; 
+	}
 	void MouseButton( bool b ) { m_LButton = b; }
 	void Init(bool loadState);
 	void UpdateTanks();

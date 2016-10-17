@@ -529,7 +529,7 @@ void Game::DrawTanks()
 // Game::PlayerInput - handle player input
 void Game::PlayerInput()
 {
-#ifndef DEV
+#ifndef HRFH
 	if (m_LButton)
 	{
 		// start line

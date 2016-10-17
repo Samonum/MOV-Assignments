@@ -113,6 +113,7 @@ public:
 	void ScaleColor( unsigned int a_Scale );
 	void Box( int x1, int y1, int x2, int y2, Pixel color );
 	void Bar( int x1, int y1, int x2, int y2, Pixel color );
+	void HalfScale(Surface * a_Dst);
 	void Resize( Surface* a_Orig );
 private:
 	// Attributes

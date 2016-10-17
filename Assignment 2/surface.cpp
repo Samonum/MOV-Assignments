@@ -185,10 +185,17 @@ void Surface::Plot( int x, int y, Pixel c )
 	if ((x >= 0) && (y >= 0) && (x < m_Width) && (y < m_Height)) m_Buffer[x + y * m_Pitch] = c;
 }
 
-void Surface::AddPlot( int x, int y, Pixel c )
-{ 
-	if ((x >= 0) && (y >= 0) && (x < m_Width) && (y < m_Height)) 
-		m_Buffer[x + y * m_Pitch] = AddBlend( c, m_Buffer[x + y * m_Pitch] );
+void Surface::AddPlot(int x, int y, Pixel c)
+{
+	if ((x >= 0) && (y >= 0) && (x < m_Width) && (y < m_Height))
+		m_Buffer[x + y * m_Pitch] = AddBlend(c, m_Buffer[x + y * m_Pitch]);
+}
+
+void Surface::MultiAddPlot(int x, int y, Pixel c, int count)
+{
+	if ((x >= 0) && (y >= 0) && (x < m_Width) && (y < m_Height))
+		for(int i = 0; i < count; i++)
+			m_Buffer[x + y * m_Pitch] = AddBlend(c, m_Buffer[x + y * m_Pitch]);
 }
 
 void Surface::Box( int x1, int y1, int x2, int y2, Pixel c )

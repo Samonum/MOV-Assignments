@@ -592,8 +592,9 @@ void Game::Tick( float a_DT )
 				{
 					float x = peakx[i] + r * sinTable[j];
 					float y = peaky[i] + r * cosTable[j];
-					for(int k = 0; k < mountainCircle[i][r]; k++)
-						game->m_Surface->AddPlot((int)x, (int)y, 0x000500);
+					//game->m_Surface->MultiAddPlot((int)x, (int)y, 0x000500, mountainCircle[i][r]);
+					//for(int k = 0; k < mountainCircle[i][r];k++)
+					game->m_Surface->AddPlot((int)x, (int)y, 0x000500 * (mountainCircle[i][r] & 31));
 				}
 	memset(mountainCircle, false, 16 * 64);
 	DrawTanks();

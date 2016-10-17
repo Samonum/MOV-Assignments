@@ -315,7 +315,7 @@ void Game::Init(bool loadState)
 		{
 			Tank* t = m_Tank[i] = new Tank();
 			t->pos = float2((float)((i % 5) * 20), (float)((i / 5) * 20 + 50));
-			t->target = float2(SCRWIDTH, 0); // initially move to bottom right corner
+			t->target = float2(SCRWIDTH, SCRHEIGHT); // initially move to bottom right corner
 			t->dir = float2(0, 0);
 			t->flags = Tank::ACTIVE | Tank::P1;
 			t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;

@@ -21,6 +21,8 @@ static GridCell tankGrid[GRIDY][GRIDX];
 static GridCell teamGrid[2][GRIDY][GRIDX];
 static float sinTable[720];
 static float cosTable[720];
+static float maxr;
+static unsigned char mountainCircle[16][64];
 
 // smoke particle effect tick function
 void Smoke::Tick()
@@ -151,13 +153,7 @@ void Tank::Tick()
 		{
 			force += d * 0.03f * (peakh[i] / sd);
 			float r = sqrtf( sd );
-			
-			for( int j = 0; j < 720; j++ )
-			{
-				float x = peakx[i] + r * sinTable[j];
-				float y = peaky[i] + r * cosTable[j];
-				game->m_Surface->AddPlot( (int)x, (int)y, 0x000500 );
-			}
+			mountainCircle[i][(int)r]++;
 		}
 	}
 		
@@ -589,6 +585,17 @@ void Game::Tick( float a_DT )
 	for ( unsigned int i = 0; i < MAXBULLET; i++ ) 
 		bullet[i].Tick();
 
+	for(int i =0; i < 16; i++)
+		for(int r = 0; r < 64; r++)
+			if(mountainCircle[i][r])
+				for (int j = 0; j < 720; j++)
+				{
+					float x = peakx[i] + r * sinTable[j];
+					float y = peaky[i] + r * cosTable[j];
+					for(int k = 0; k < mountainCircle[i][r]; k++)
+						game->m_Surface->AddPlot((int)x, (int)y, 0x000500);
+				}
+	memset(mountainCircle, false, 16 * 64);
 	DrawTanks();
 	PlayerInput();
 

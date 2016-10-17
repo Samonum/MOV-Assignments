@@ -11,7 +11,7 @@
 
 namespace Tmpl8 {
 
-#define MAXP1		500				// increase to test your optimized code
+#define MAXP1		5000				// increase to test your optimized code
 #define MAXP2		(4 * MAXP1)	// because the player is smarter than the AI
 #define MAXBULLET	5000
 #define DELIMITER   ' '
@@ -53,8 +53,8 @@ public:
 	void Tick();
 	float2 pos, speed;
 	int flags;
-	inline int gridX() { return ((int)pos.x + 512) >> 4; };
-	inline int gridY() { return ((int)pos.y + 640) >> 4; };
+	inline int gridX() { return ((int)pos.x) >> 4; };
+	inline int gridY() { return ((int)pos.y) >> 4; };
 };
 
 class Surface;

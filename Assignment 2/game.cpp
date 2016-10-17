@@ -17,8 +17,8 @@ static float peakh[16] = { 200, 150, 160, 255, 200, 255, 200, 300, 120, 100,  80
 static int aliveP1 = MAXP1;
 static int aliveP2 = MAXP2;
 static Bullet bullet[MAXBULLET];
-static GridCell tankGrid[GRIDSTUFF][GRIDSTUFF];
-static GridCell teamGrid[2][GRIDSTUFF][GRIDSTUFF];
+static GridCell tankGrid[GRIDY][GRIDX];
+static GridCell teamGrid[2][GRIDY][GRIDX];
 static float sinTable[720];
 static float cosTable[720];
 
@@ -151,8 +151,8 @@ void Tank::Tick()
 	for (int i = -1; i < 2; i++)
 		for (int j = -1; j < 2; j++)
 		{
-			int curX = (grid_x + j) & GRIDMASK;
-			int curY = (grid_y + i) & GRIDMASK;
+			int curX = (grid_x + j) & GRIDXMASK;
+			int curY = (grid_y + i) & GRIDYMASK;
 			for (int k = 0; k < tankGrid[curY][curX].count; k++)
 			{
 				if (tankGrid[curY][curX].getTank(k) == this)
@@ -224,8 +224,8 @@ void Tank::Tick()
 	for (int i = vstart; i <= vend; i++)
 		for (int j = hstart; j <= hend; j++)
 		{
-			int curX = (newGridX + j) & GRIDMASK;
-			int curY = (newGridY + i) & GRIDMASK;
+			int curX = (newGridX + j) & GRIDXMASK;
+			int curY = (newGridY + i) & GRIDYMASK;
 			int count = teamGrid[flags>>2][curY][curX].count;
 
 			for (int k = 0; k<count; k++)

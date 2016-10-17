@@ -4,12 +4,14 @@
 #define	SCRWIDTH	1024
 #define SCRHEIGHT	768
 #define GRIDSIZE	16
-#define GRIDSTUFF	1024/GRIDSIZE
-#define GRIDMASK	GRIDSTUFF - 1
+#define GRIDX		1024/GRIDSIZE
+#define GRIDY		8192/GRIDSIZE
+#define GRIDXMASK	GRIDX - 1
+#define GRIDYMASK	GRIDY - 1
 
 namespace Tmpl8 {
 
-#define MAXP1		2000				// increase to test your optimized code
+#define MAXP1		5000				// increase to test your optimized code
 #define MAXP2		(4 * MAXP1)	// because the player is smarter than the AI
 #define MAXBULLET	200
 #define DELIMITER   ' '
@@ -38,8 +40,8 @@ public:
 	int flags, reloading;
 	unsigned short id;
 	Smoke smoke;
-	inline int gridX() { return ((int)pos.x >> 5) & (GRIDSTUFF - 1); };
-	inline int gridY() { return ((int)pos.y >> 5) & (GRIDSTUFF - 1); };
+	inline int gridX() { return ((int)pos.x >> 5) & (GRIDX - 1); };
+	inline int gridY() { return ((int)pos.y >> 5) & (GRIDY - 1); };
 };
 
 class Bullet

@@ -314,7 +314,7 @@ void Game::Init(bool loadState)
 		for (unsigned int i = 0; i < MAXP1; i++)
 		{
 			Tank* t = m_Tank[i] = new Tank();
-			t->pos = float2((float)((i % 5) * 20), (float)((i / 5) * 20 + 50));
+			t->pos = float2((float)((i % 40) * 20) - 500, (float)((i / 40) * 20)- 500);
 			t->target = float2(SCRWIDTH, SCRHEIGHT); // initially move to bottom right corner
 			t->dir = float2(0, 0);
 			t->flags = Tank::ACTIVE | Tank::P1;
@@ -339,7 +339,8 @@ void Game::Init(bool loadState)
 		for (unsigned int i = 0; i < MAXP2; i++)
 		{
 			Tank* t = m_Tank[i + MAXP1] = new Tank();
-			t->pos = float2((float)((i % 12) * 20 + 900), (float)((i / 12) * 20 + 600));
+			t->pos = float2((float)((i % 50) * 20) + 700, (float)((i / 50) * 20) - 500);
+			//t->pos = float2((float)((i % 50) * 20 + 900), (float)((i / 50) * 20 + 600));
 			t->target = float2(424, 336); // move to player base
 			t->dir = float2(0, 0);
 			t->flags = Tank::ACTIVE | Tank::P2;

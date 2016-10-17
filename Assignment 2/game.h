@@ -1,8 +1,8 @@
 #ifndef I_GAME_H
 #define I_GAME_H
 
-#define	SCRWIDTH	1024
-#define SCRHEIGHT	768
+#define	SCRWIDTH	1024*2
+#define SCRHEIGHT	768*2
 #define GRIDSIZE	16
 #define GRIDX		2048/GRIDSIZE
 #define GRIDY		2048/GRIDSIZE

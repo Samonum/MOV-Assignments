@@ -268,33 +268,33 @@ void Tank::Tick()
 void Game::Init(bool loadState)
 {
 	m_Heights = new Surface("testdata/heightmap.png");
-	m_Backdrop = new Surface(1024, 768);
-	m_Grid = new Surface(1024, 768);
+	m_Backdrop = new Surface(SCRWIDTH, SCRHEIGHT);
+	m_Grid = new Surface(SCRWIDTH, SCRHEIGHT);
 
 	Pixel* a1 = m_Grid->GetBuffer();
 	Pixel* a2 = m_Backdrop->GetBuffer();
 	Pixel* a3 = m_Heights->GetBuffer();
 
-	for ( int y = 0; y < 768; y++ ) 
-		for ( int idx = y * 1024, x = 0; x < 1024; x++, idx++ ) 
+	for ( int y = 0; y < SCRHEIGHT; y++ )
+		for ( int idx = y * SCRWIDTH, x = 0; x < SCRWIDTH; x++, idx++ )
 			a1[idx] = (((x & 31) == 0) | ((y & 31) == 0)) ? 0x6600 : 0;
 
-	for ( int y = 0; y < 767; y++ ) 
-		for ( int idx = y * 1024, x = 0; x < 1023; x++, idx++ ) 
+	for ( int y = 0; y < SCRHEIGHT - 1; y++ )
+		for ( int idx = y * SCRWIDTH, x = 0; x < SCRWIDTH-1; x++, idx++ )
 		{
-			float3 N = normalize(float3((float)(a3[idx + 1] & 255) - (a3[idx] & 255), 1.5f, (float)(a3[idx + 1024] & 255) - (a3[idx] & 255))), L(1, 4, 2.5f);
+			float3 N = normalize(float3((float)(a3[idx + 1] & 255) - (a3[idx] & 255), 1.5f, (float)(a3[idx + SCRWIDTH] & 255) - (a3[idx] & 255))), L(1, 4, 2.5f);
 
-			float h = (float)(a3[x + y * 1024] & 255) * 0.0005f;
-			float dx = x - 512.f;
-			float dy = y - 384.f; 
+			float h = (float)(a3[x + y * SCRWIDTH] & 255) * 0.0005f;
+			float dx = x - SCRWIDTH/2;
+			float dy = y - SCRHEIGHT/2; 
 			float d = sqrtf(dx * dx + dy * dy);
 			float dt = dot(N, normalize(L));
 
-			int u = max(0, min(1023, (int)(x - dx * h)));
-			int v = max(0, min(767, (int)(y - dy * h)));
+			int u = max(0, min(SCRWIDTH-1, (int)(x - dx * h)));
+			int v = max(0, min(SCRHEIGHT-1, (int)(y - dy * h)));
 			int r = (int)Rand(255);
 
-			a2[idx] = AddBlend(a1[u + v * 1024], ScaleColor(ScaleColor(0x33aa11, r) + ScaleColor(0xffff00, (255 - r)), (int)(max(0.0f, dt) * 80.0f) + 10));
+			a2[idx] = AddBlend(a1[u + v * SCRWIDTH], ScaleColor(ScaleColor(0x33aa11, r) + ScaleColor(0xffff00, (255 - r)), (int)(max(0.0f, dt) * 80.0f) + 10));
 		}
 
 	for (int i = 0; i < 720; i++)

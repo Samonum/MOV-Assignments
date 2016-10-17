@@ -106,6 +106,7 @@ public:
 	void ThickLine( int ax1, int ay1, int ax2, int ay2, Pixel c );
 	void Plot( int x, int y, Pixel c );
 	void AddPlot( int x, int y, Pixel c );
+	void MultiAddPlot(int x, int y, Pixel c, int count);
 	void LoadImage( char* a_File );
 	void CopyTo( Surface* a_Dst, int a_X, int a_Y );
 	void BlendCopyTo( Surface* a_Dst, int a_X, int a_Y );

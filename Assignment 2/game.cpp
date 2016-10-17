@@ -21,6 +21,8 @@ static GridCell tankGrid[GRIDY][GRIDX];
 static GridCell teamGrid[2][GRIDY][GRIDX];
 static float sinTable[720];
 static float cosTable[720];
+static float maxr;
+static unsigned char mountainCircle[16][64];
 
 // smoke particle effect tick function
 void Smoke::Tick()
@@ -70,13 +72,53 @@ void Bullet::Tick()
 
 	if ((pos.x < 0) || (pos.x > (SCRWIDTH - 1)) || (pos.y < 0) || (pos.y > (SCRHEIGHT - 1))) 
 		flags = 0; // off-screen
+	
+	int grid_x = gridX();
+	int grid_y = gridY();
 
+	for (int i = -1; i < 2; i++)
+		for (int j = -1; j < 2; j++)
+		{
+			int curX = (grid_x + j) & GRIDXMASK;
+			int curY = (grid_y + i) & GRIDYMASK;
+
+			int posX = (curX + 512) * 16;
+			
+			GridCell gc = teamGrid[flags >> 2][curY][curX];
+			int count = teamGrid[flags >> 2][curY][curX].count;
+			if (count > 0)
+			{
+				int a = 1;
+				a *= count;
+			}
+			int alpha = flags;
+			for (int k = 0; k < count; k++)
+			{
+				Tank* t = gc.getTank(k);
+
+				if (!((pos.x >(t->pos.x - 2)) && (pos.y >(t->pos.y - 2)) && (pos.x < (t->pos.x + 2)) && (pos.y < (t->pos.y + 2))))
+					continue;
+
+				// update counters
+				if (t->flags & Tank::P1)
+					aliveP1--;
+				else
+					aliveP2--;
+
+				t->flags &= Tank::P1 | Tank::P2;	// kill tank
+				teamGrid[1 ^ (t->flags >> 2)][t->gridY()][t->gridX()].remove(t);
+				flags = 0;						// destroy bullet
+				break;
+			}
+		}
+		
+	/*
 	unsigned int start = 0, end = MAXP1;
 
 	if (flags & P1)
 	{
-		start = MAXP1;
-		end = MAXP1 + MAXP2;
+	start = MAXP1;
+	end = MAXP1 + MAXP2;
 	}
 
 	for ( unsigned int i = start; i < end; i++ ) // check all opponents
@@ -97,6 +139,7 @@ void Bullet::Tick()
 		flags = 0;						// destroy bullet
 		break;
 	}
+	*/
 }
 
 // Tank::Fire - spawns a bullet
@@ -151,13 +194,7 @@ void Tank::Tick()
 		{
 			force += d * 0.03f * (peakh[i] / sd);
 			float r = sqrtf( sd );
-			
-			for( int j = 0; j < 720; j++ )
-			{
-				float x = peakx[i] + r * sinTable[j];
-				float y = peaky[i] + r * cosTable[j];
-				game->m_Surface->AddPlot( (int)x, (int)y, 0x000500 );
-			}
+			mountainCircle[i][(int)r]++;
 		}
 	}
 		
@@ -589,6 +626,16 @@ void Game::Tick( float a_DT )
 	for ( unsigned int i = 0; i < MAXBULLET; i++ ) 
 		bullet[i].Tick();
 
+	for(int i =0; i < 16; i++)
+		for(int r = 0; r < 64; r++)
+			if(mountainCircle[i][r])
+				for (int j = 0; j < 720; j++)
+				{
+					float x = peakx[i] + r * sinTable[j];
+					float y = peaky[i] + r * cosTable[j];
+					game->m_Surface->AddPlot((int)x, (int)y, 0x000500 * (mountainCircle[i][r]));
+				}
+	memset(mountainCircle, false, 16 * 64);
 	DrawTanks();
 	PlayerInput();
 

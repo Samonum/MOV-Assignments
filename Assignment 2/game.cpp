@@ -78,7 +78,37 @@ void Bullet::Tick()
 		start = MAXP1;
 		end = MAXP1 + MAXP2;
 	}
+	/*
+	int grid_x = gridX();
+	int grid_y = gridY();
+	
+	for (int i = -1; i < 2; i++)
+		for (int j = -1; j < 2; j++)
+		{
+			int curX = (grid_x + j) & GRIDXMASK;
+			int curY = (grid_y + i) & GRIDYMASK;
 
+			for (int k = 0; k < teamGrid[flags >> 2][curY][curX].count; k++)
+			{
+				Tank* t = game->m_Tank[k];
+
+				if (!((pos.x >(t->pos.x - 2)) && (pos.y >(t->pos.y - 2)) && (pos.x < (t->pos.x + 2)) && (pos.y < (t->pos.y + 2))))
+					continue;
+
+				// update counters
+				if (t->flags & Tank::P1)
+					aliveP1--;
+				else
+					aliveP2--;
+
+				t->flags &= Tank::P1 | Tank::P2;	// kill tank
+				teamGrid[1 ^ (t->flags >> 2)][t->gridY()][t->gridX()].remove(t);
+				flags = 0;						// destroy bullet
+				break;
+			}
+		}
+		*/
+	
 	for ( unsigned int i = start; i < end; i++ ) // check all opponents
 	{
 		Tank* t = game->m_Tank[i];

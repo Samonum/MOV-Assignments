@@ -53,6 +53,8 @@ public:
 	void Tick();
 	float2 pos, speed;
 	int flags;
+	inline int gridX() { return ((int)pos.x + 512) >> 4; };
+	inline int gridY() { return ((int)pos.y + 640) >> 4; };
 };
 
 class Surface;

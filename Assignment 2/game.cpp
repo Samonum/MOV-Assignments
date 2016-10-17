@@ -147,6 +147,20 @@ void Tank::Tick()
 	int grid_x = this->gridX();
 	int grid_y = this->gridY();
 
+	if (!(grid_y < GRIDY - 1 && grid_x < GRIDX - 1 && grid_y > 0 && grid_x > 0))
+	{
+		dir += force;
+		dir = normalize(dir);
+		pos += dir * maxspeed * 0.5f;
+		if (active)
+		{
+			tankGrid[grid_y][grid_x].remove(this);
+			teamGrid[1 ^ (flags >> 2)][grid_y][grid_x].remove(this);
+			active = false;
+		}
+		return;
+	}
+		
 	// evade other tanks
 	for (int i = -1; i < 2; i++)
 		for (int j = -1; j < 2; j++)
@@ -195,7 +209,13 @@ void Tank::Tick()
 	pos += dir * maxspeed * 0.5f;
 	int newGridX = gridX();
 	int newGridY = gridY();
-	if (newGridX != grid_x || newGridY != grid_y)
+	if (!active)
+	{
+		active = true;
+		tankGrid[newGridY][newGridX].add(this);
+		teamGrid[1 ^ (flags >> 2)][newGridY][newGridX].add(this);
+	}
+	else if (newGridX != grid_x || newGridY != grid_y)
 	{
 		tankGrid[grid_y][grid_x].remove(this);
 		tankGrid[newGridY][newGridX].add(this);
@@ -295,13 +315,23 @@ void Game::Init(bool loadState)
 		{
 			Tank* t = m_Tank[i] = new Tank();
 			t->pos = float2((float)((i % 5) * 20), (float)((i / 5) * 20 + 50));
-			t->target = float2(SCRWIDTH, SCRHEIGHT); // initially move to bottom right corner
+			t->target = float2(SCRWIDTH, 0); // initially move to bottom right corner
 			t->dir = float2(0, 0);
 			t->flags = Tank::ACTIVE | Tank::P1;
 			t->maxspeed = (i < (MAXP1 / 2)) ? 0.65f : 0.45f;
 			t->id = i;
-			tankGrid[t->gridY()][t->gridX()].add(t);
-			teamGrid[1][t->gridY()][t->gridX()].add(t);
+
+			int grid_x = t->gridX();
+			int grid_y = t->gridY();
+
+			if (!(grid_y < GRIDY - 1 && grid_x < GRIDX - 1 && grid_y > 0 && grid_x > 0))
+			{
+				t->active = false;
+				continue;
+			}
+
+			tankGrid[grid_y][grid_x].add(t);
+			teamGrid[1][grid_y][grid_x].add(t);
 		}
 
 
@@ -315,8 +345,18 @@ void Game::Init(bool loadState)
 			t->flags = Tank::ACTIVE | Tank::P2;
 			t->maxspeed = 0.3f;
 			t->id = i + MAXP1;
-			tankGrid[t->gridY()][t->gridX()].add(t);
-			teamGrid[0][t->gridY()][t->gridX()].add(t);
+
+			int grid_x = t->gridX();
+			int grid_y = t->gridY();
+
+			if (!(grid_y < GRIDY - 1 && grid_x < GRIDX - 1 && grid_y > 0 && grid_x > 0))
+			{
+				t->active = false;
+				continue;
+			}
+
+			tankGrid[grid_y][grid_x].add(t);
+			teamGrid[0][grid_y][grid_x].add(t);
 		}
 	}
 	else

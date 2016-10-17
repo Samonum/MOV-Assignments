@@ -4,8 +4,8 @@
 #define	SCRWIDTH	1024
 #define SCRHEIGHT	768
 #define GRIDSIZE	16
-#define GRIDX		1024/GRIDSIZE
-#define GRIDY		8192/GRIDSIZE
+#define GRIDX		2048/GRIDSIZE
+#define GRIDY		2048/GRIDSIZE
 #define GRIDXMASK	GRIDX - 1
 #define GRIDYMASK	GRIDY - 1
 
@@ -38,10 +38,11 @@ public:
 	float2 pos, dir, target;
 	float maxspeed;
 	int flags, reloading;
+	bool active = true;
 	unsigned short id;
 	Smoke smoke;
-	inline int gridX() { return ((int)pos.x >> 5) & (GRIDX - 1); };
-	inline int gridY() { return ((int)pos.y >> 5) & (GRIDY - 1); };
+	inline int gridX() { return ((int)pos.x + 512) >> 4; };
+	inline int gridY() { return ((int)pos.y + 640) >> 4; };
 };
 
 class Bullet

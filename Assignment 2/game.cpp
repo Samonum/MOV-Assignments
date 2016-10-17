@@ -124,6 +124,23 @@ void Tank::Tick()
 
 	float2 force = normalize( target - pos );
 
+	int grid_x = this->gridX();
+	int grid_y = this->gridY();
+
+	if (!(grid_y < GRIDY - 1 && grid_x < GRIDX - 1 && grid_y > 0 && grid_x > 0))
+	{
+		dir += force;
+		dir = normalize(dir);
+		pos += dir * maxspeed * 0.5f;
+		if (active)
+		{
+			tankGrid[grid_y][grid_x].remove(this);
+			teamGrid[1 ^ (flags >> 2)][grid_y][grid_x].remove(this);
+			active = false;
+		}
+		return;
+	}
+
 	// evade mountain peaks
 	for ( unsigned int i = 0; i < 16; i++ )
 	{
@@ -142,23 +159,6 @@ void Tank::Tick()
 				game->m_Surface->AddPlot( (int)x, (int)y, 0x000500 );
 			}
 		}
-	}
-
-	int grid_x = this->gridX();
-	int grid_y = this->gridY();
-
-	if (!(grid_y < GRIDY - 1 && grid_x < GRIDX - 1 && grid_y > 0 && grid_x > 0))
-	{
-		dir += force;
-		dir = normalize(dir);
-		pos += dir * maxspeed * 0.5f;
-		if (active)
-		{
-			tankGrid[grid_y][grid_x].remove(this);
-			teamGrid[1 ^ (flags >> 2)][grid_y][grid_x].remove(this);
-			active = false;
-		}
-		return;
 	}
 		
 	// evade other tanks

@@ -221,12 +221,38 @@ void Surface::HalfScale(Surface* a_Dst)
 	Pixel* dst = a_Dst->GetBuffer();
 	Pixel* src = m_Buffer;
 	const uint mask = 0x00ff00;
+	const uint imask = 0xff00ff;
+	const uint lossMask = 0xfcfcfc;
 	const int invmask = ~mask;
 	for(int i = 0; i < m_Height; i+=2)
 		for (int j = 0; j < m_Width; j += 2)
-		{
+		{/*
+			Pixel p1rb = src[i*m_Width + j] & ~mask;
+			Pixel p2rb = src[(i + 1)*m_Width + j] & ~mask;
+			Pixel p3rb = src[i*m_Width + j + 1] & ~mask;
+			Pixel p4rb = src[(i + 1)*m_Width + j + 1] & ~mask;
+
+			Pixel rb = (p1rb + p2rb + p3rb + p4rb);
+
+			Pixel p1g = src[i*m_Width + j] & mask;
+			Pixel p2g = src[(i + 1)*m_Width + j] & mask;
+			Pixel p3g = src[i*m_Width + j + 1] & mask;
+			Pixel p4g = src[(i + 1)*m_Width + j + 1] & mask;
+
+			Pixel g = (p1g + p2g + p3g + p4g);
+			/*
+			Pixel p1g = src[i*m_Width + j] & lossMask;
+			Pixel p2g = src[(i + 1)*m_Width + j] & lossMask;
+			Pixel p3g = src[i*m_Width + j + 1] & lossMask;
+			Pixel p4g = src[(i + 1)*m_Width + j + 1] & lossMask;
+			
+			Pixel uberPixel = (rb + g) >> 2;
+			dst[(i*m_Width) / 4 + j / 2] = uberPixel;
+			*/
+			
+			
 			dst[(i*m_Width) / 4 + j / 2] = mask&(((mask&src[(i*m_Width) + j]) + (mask&src[(i + 1)*m_Width + j]) + (mask&src[(i*m_Width) + 1 + j]) + (mask&src[(1 + i)*m_Width + 1 + j])) / 4);
-			dst[(i*m_Width) / 4 + j / 2] |= ~mask&(((~mask&src[(i*m_Width) + j]) + (~mask&src[(i + 1)*m_Width + j]) + (~mask&src[(i*m_Width) + 1 + j]) + (~mask&src[(1 + i)*m_Width + 1 + j])) / 4);
+			dst[(i*m_Width) / 4 + j / 2] |= imask&(((imask&src[(i*m_Width) + j]) + (imask&src[(i + 1)*m_Width + j]) + (imask&src[(i*m_Width) + 1 + j]) + (imask&src[(1 + i)*m_Width + 1 + j])) / 4);
 		}
 }
 

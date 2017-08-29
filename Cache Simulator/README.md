@@ -1,4 +1,4 @@
-#Cache Simulator
+# Cache Simulator
 Cache Simulator made to compare different cache eviction policies.
 
 All settings are in [cache.h](../cache.h), including which policy to test.  

@@ -46,7 +46,7 @@ void Memory::WRITECL( address a, CacheLine& line )
 // ------------------------------------------------------------------
 // CACHE SIMULATOR
 // Currently passes all requests directly to simulated RAM.
-// TODO (for a passing grade (6)):
+// (for a passing grade (6)):
 // 1. Build a fully associative cache to speed up requests
 // 2. Build a direct mapped cache to improve on the fully associative
 //    cache
@@ -604,7 +604,6 @@ CacheLine Cache::ReadMiss(address a, bool isWrite)
 #endif
 
 // write a single byte to memory
-// TODO: minimize calls to memory->WRITE using caching
 void Cache::WRITECL(address a, CacheLine& line)
 {
 	//Read the cacheline to make sure it's in L1

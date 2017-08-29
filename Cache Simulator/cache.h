@@ -1,9 +1,9 @@
 #pragma once
 
-#define L1CACHESIZE		8192	/2				// total L1$ size, in bytes
-#define L2CACHESIZE		16384	/2				// total L2$ size, in bytes
-#define L3CACHESIZE		65536	/2				// total L3$ size, in bytes
-#define SLOTSIZE		64						// cache slot size, in bytes
+#define L1CACHESIZE		8192					// total L1$ size, in bytes
+#define L2CACHESIZE		16384					// total L2$ size, in bytes
+#define L3CACHESIZE		65536					// total L3$ size, in bytes
+#define SLOTSIZE		64						// cache slot size, in bytes, must be a power of 2
 #define ADDRESSMASK		(0x1000000 - SLOTSIZE)	// used for masking out lowest log2(SLOTSIZE) bits
 #define OFFSETMASK		(SLOTSIZE - 1)			// used for masking out bits above log2(SLOTSIZE)
 #define RAMACCESSCOST	110
@@ -14,7 +14,7 @@
 #define DIRTY           0b10
 #define NWAYN			8
 
-#define EVICTION		3						// 0 = random, 1 = FIFO, 2 = Bit-PLRU, 3 = Tree-PLRU, 4 = Modified-Tree-PLRU, 5 = LRU
+#define EVICTION		0						// 0 = random, 1 = FIFO, 2 = Bit-PLRU, 3 = Tree-PLRU, 4 = Modified-Tree-PLRU, 5 = LRU
 #define LRUMARKER		0b100					// Mask for the marker bit for the Bit-PLRU
 typedef unsigned int address;
 
@@ -89,7 +89,6 @@ public:
 
 	void ResetStats();
 	void ConsoleDebug();
-	// TODO: READ/WRITE functions for (aligned) 16 and 32-bit values
 	// data
 	ParkingLot* lot;
 	MemCac* memory;
